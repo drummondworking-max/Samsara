@@ -2,16 +2,16 @@
 const RENDER = { cv: null, ctx: null, W: 0, H: 0, px: 1, zoom: 1, k: 1, CH: 12, minimapDirty: 1, lastMini: 0, clouds: [] };
 const ISO_RX = 45.25, ISO_RY = 22.63;
 function resizeCanvas() {
-  const R = RENDER; const cw = innerWidth, ch = innerHeight; const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const cap = OPT.quality === 'low' ? 1.1e6 : 2.6e6; let px = dpr; if (cw * ch * px * px > cap) px = Math.sqrt(cap / (cw * ch));
+  const R = RENDER; const vv = window.visualViewport; const cw = Math.round(vv && vv.width ? vv.width : innerWidth), ch = Math.round(vv && vv.height ? vv.height : innerHeight); const coarse = matchMedia('(pointer:coarse)').matches; const dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
+  const cap = OPT.quality === 'low' ? 1.1e6 : coarse ? 1.5e6 : 2.6e6; let px = dpr; if (cw * ch * px * px > cap) px = Math.sqrt(cap / (cw * ch));
   R.px = px; R.W = Math.round(cw * px); R.H = Math.round(ch * px); R.cv.width = R.W; R.cv.height = R.H;
-  R.zoom = clamp(Math.sqrt(cw * ch / (900 * 580)), 0.9, 2.3); if (Math.min(cw, ch) < 500) R.zoom = Math.max(R.zoom, 0.95);
+  R.zoom = clamp(Math.sqrt(cw * ch / (900 * 580)), 0.9, 2.3); if (Math.min(cw, ch) < 500) R.zoom = Math.max(R.zoom, 0.85);
   if (ch > cw * 1.15) R.zoom = clamp(cw / 520, 0.74, 1.25);
   R.k = R.zoom * px; R.mobile = matchMedia('(pointer:coarse)').matches || Math.min(cw, ch) < 560;
   R.light = mkCanvas(Math.ceil(R.W / 4), Math.ceil(R.H / 4)); R.lctx = R.light.getContext('2d');
   R.vig = mkCanvas(256, 256); const g = R.vig.getContext('2d'); g.fillStyle = rgrad(g, 128, 128, 60, 182, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.75)']]); g.fillRect(0, 0, 256, 256);
   if (!R.hole) { R.hole = mkCanvas(128, 128); const h = R.hole.getContext('2d'); h.fillStyle = rgrad(h, 64, 64, 0, 64, [[0, 'rgba(0,0,0,1)'], [0.45, 'rgba(0,0,0,0.85)'], [0.75, 'rgba(0,0,0,0.35)'], [1, 'rgba(0,0,0,0)']]); h.fillRect(0, 0, 128, 128); }
-  const s = clamp(Math.min(cw / 760, ch / 560), 0.56, 1.5); document.documentElement.style.setProperty('--s', s.toFixed(3));
+  const s = clamp(Math.min(cw / 760, ch / 560) * (ch < 460 ? 0.85 : 1), 0.5, 1.5); document.documentElement.style.setProperty('--s', s.toFixed(3));
   const mm = $('minimap'); if (mm) { mm.width = Math.round(150 * s * dpr); mm.height = Math.round(110 * s * dpr); }
   RENDER.minimapDirty = 1;
 }

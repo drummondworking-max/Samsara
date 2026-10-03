@@ -28,7 +28,7 @@ function perfWatch(now) {
 function boot() {
   RENDER.cv = $('cv'); RENDER.ctx = RENDER.cv.getContext('2d', { alpha: false });
   AU.vol.music = OPT.music; AU.vol.sfx = OPT.sfx;
-  resizeCanvas(); window.addEventListener('resize', () => { resizeCanvas(); if (G.state === 'cine') CINE.resize(); if (G.A) G.A.chunks.clear(); });
+  resizeCanvas(); let rzT = 0, lastDim = innerWidth + 'x' + innerHeight; const onRz = () => { clearTimeout(rzT); rzT = setTimeout(() => { const d = innerWidth + 'x' + innerHeight; if (d === lastDim) return; lastDim = d; resizeCanvas(); if (G.state === 'cine') CINE.resize(); if (G.A) G.A.chunks.clear(); }, 120); }; window.addEventListener('resize', onRz); window.addEventListener('orientationchange', onRz);
   buildArt(); setupInput();
   const wake = () => AU.init(); window.addEventListener('pointerdown', wake, { passive: true }); window.addEventListener('keydown', wake);
   document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') UI.open('menu'); if (G.C && document.hidden) saveChar(G.C); });

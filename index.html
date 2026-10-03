@@ -250,6 +250,34 @@ button:focus-visible,.slot:focus-visible,input:focus-visible{outline:2px solid v
 .intro-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.2),rgba(0,0,0,.92));padding:24px;box-sizing:border-box;text-align:center}
 .intro-card .big{font-family:var(--f-logo);font-size:clamp(34px,7vw,72px);color:var(--gold-hi);text-shadow:0 0 24px rgba(255,180,80,.5),0 3px 0 #000;margin:0;line-height:1}
 .intro-card .skt{font-family:var(--f-ui);letter-spacing:.5em;color:var(--dim);font-size:13px;text-transform:uppercase}
+
+/* ---- no-scroll desktop layouts: item / skill text always visible beside the grids ---- */
+.panel.wide{width:min(1180px,100%)}
+@media (min-width:900px){
+  .invwrap.three{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(250px,.95fr);align-items:start;gap:14px}
+  .tipcol{position:sticky;top:0;max-height:calc(100vh - 150px);overflow:auto}
+  .tipcol .tipdock,.tipcol .itip{margin-top:0}
+  .tipcol #tipbox{min-height:140px}
+  .skl{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.8fr);gap:14px;align-items:start}
+  .infocol{position:sticky;top:0;max-height:calc(100vh - 190px);overflow:auto}
+  .infocol .skinfo{margin-top:0}
+  .tree{gap:12px}
+}
+@media (min-width:900px) and (max-height:820px){
+  .doll{max-width:230px}
+  .snode{width:50px}.tree{gap:9px;padding:6px 4px 8px}.snode+.snode::before{top:-10px;height:8px}
+  .tree h4{min-height:2em;font-size:11px}
+  .slotsbar{margin:2px 0 4px}.slotsbar .sk{width:34px;height:34px}
+  .pb{padding:8px 12px 10px}
+  .ph{padding:6px 10px 5px 14px}
+  .sec{margin:6px 0 4px}
+  .skinfo{padding:8px 10px;font-size:14px;line-height:1.35}
+  .itip{font-size:13px;line-height:1.35;padding:8px 10px}
+}
+@media (min-width:900px) and (max-height:680px){
+  .snode{width:42px}.tree{gap:7px}.doll{max-width:190px}.grid{gap:3px}
+}
+@media (max-width:899px){.tipcol{display:contents}.infocol{display:contents}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){ .grid{grid-template-columns:repeat(6,minmax(0,1fr))} .shopgrid{grid-template-columns:repeat(5,minmax(0,1fr))} .trees{gap:4px} .pb{padding:10px 10px 12px} }
 </style>
@@ -392,14 +420,6 @@ const CLASSES = {
     start: 'prajna_bolt', weapon: 'w_sword1', robe: '#7a1f2b', robe2: '#d8a53a', skin: '#d8a27a',
     mantra: "Manjushri's Sword"
   },
-  invoker: {
-    name: 'Dharmapala Invoker', title: 'Caller of the Protectors', stat: 'spi',
-    desc: 'A tantric monk who calls the wrathful protectors of the Dharma to fight at his side, and whose compassion mends body and spirit alike.',
-    trees: ['Guardians', 'Thousand Arms', 'Compassion'],
-    base: { str: 15, dex: 20, vit: 22, spi: 23 }, life: [55, 3.1, 3], mana: [16, 1.8, 1.5],
-    start: 'snow_lion', weapon: 'w_mala1', robe: '#8e2418', robe2: '#e0b23a', skin: '#b87a50',
-    mantra: 'Thousand-Armed Mercy'
-  },
   archer: {
     name: 'Kyudo Archer', title: 'Zen Bowman', stat: 'dex',
     desc: 'A Zen monk of the bow, for whom aim, breath and target are one. He fights from afar with arrows of wind, fire and frost, and never wastes a step.',
@@ -417,7 +437,7 @@ CLASSES.chod = {
   start: 'bone_shard', weapon: 'w_khatvanga1', robe: '#e8e2d2', robe2: '#8a1a1a', skin: '#c8906a',
   mantra: 'The Great Feast'
 };
-const CLASS_IDS = ['vajra', 'sage', 'invoker', 'archer', 'chod'];
+const CLASS_IDS = ['vajra', 'sage', 'archer', 'chod'];
 
 /* type: bolt strike nova orbit aura chain zone rain summon beam boomerang sentry buff passive heal */
 const SKILL_LIST = [
@@ -518,55 +538,6 @@ const SKILL_LIST = [
   { id: 'kalachakra', cls: 'sage', tree: 2, tier: 4, name: 'Kalachakra Wheel', type: 'orbit', elem: 'fire', stat: 'spi', icon: ['wheel', '#ffcf4a'],
     desc: 'The Wheel of Time turns about you, its burning spokes sweeping through your enemies.',
     cost: l => 16, cd: l => 10, dmg: R(14, 24), p: l => ({ n: 4 + Math.floor(l / 5), orbitR: 2.8, size: 0.8, dur: 6, spin: 2.4, hitCd: 0.4, sprite: 'sunfire', wheel: 1 }), syn: [['homa_meteor', 5], ['mandala_circle', 5]] },
-
-  /* ---------------- DHARMAPALA INVOKER ---------------- */
-  { id: 'snow_lion', cls: 'invoker', tree: 0, tier: 0, name: 'Snow Lion', type: 'summon', elem: 'phys', stat: 'spi', icon: ['lion', '#e8f0ff'],
-    desc: 'Call a snow lion of the high mountains to fight at your side. More lions answer as the skill grows.',
-    cost: l => 5, cd: l => 3, dmg: R(4, 8), p: l => ({ kind: 'snow_lion', max: Math.min(5, 1 + Math.floor(l / 4)), hp: 40 * (1 + 0.25 * (l - 1)) }), syn: [['garuda', 3], ['om_mani', 3]] },
-  { id: 'guardian_mastery', cls: 'invoker', tree: 0, tier: 1, name: 'Guardian Mastery', type: 'passive', icon: ['deity', '#e0b23a'],
-    desc: 'Your bond with the protectors deepens. Your summoned guardians hit harder and endure more.',
-    mods: l => ({ minionDmg: 15 + 7 * l, minionLife: 20 + 8 * l }) },
-  { id: 'garuda', cls: 'invoker', tree: 0, tier: 2, name: 'Garuda', type: 'summon', elem: 'fire', stat: 'spi', icon: ['bird', '#ff9a3a'],
-    desc: 'The great sun-bird, devourer of serpents, circles above and rains burning feathers on your foes.',
-    cost: l => 8, cd: l => 5, dmg: R(6, 10), p: l => ({ kind: 'garuda', max: Math.min(3, 1 + Math.floor(l / 7)), hp: 34 * (1 + 0.25 * (l - 1)) }), syn: [['snow_lion', 3], ['guardian_mastery', 2]] },
-  { id: 'naga', cls: 'invoker', tree: 0, tier: 3, name: 'Naga Guardian', type: 'summon', elem: 'void', stat: 'spi', icon: ['snake', '#4fd38f'],
-    desc: 'A serpent-king who once sheltered the Buddha now shelters you, spitting venom that slows.',
-    cost: l => 10, cd: l => 6, dmg: R(8, 14), p: l => ({ kind: 'naga', max: Math.min(3, 1 + Math.floor(l / 8)), hp: 60 * (1 + 0.25 * (l - 1)) }), syn: [['garuda', 3], ['snow_lion', 3]] },
-  { id: 'mahakala', cls: 'invoker', tree: 0, tier: 4, name: 'Invoke Mahakala', type: 'summon', elem: 'phys', stat: 'spi', icon: ['deity', '#2a3aa8'],
-    desc: 'The Great Black One descends for a time, crushing everything around him.',
-    cost: l => 20, cd: l => 22, dmg: R(45, 70), p: l => ({ kind: 'mahakala', max: 1, hp: 300 * (1 + 0.25 * (l - 1)), dur: 10 + 0.3 * l }), syn: [['guardian_mastery', 4], ['naga', 3]] },
-
-  { id: 'reaching_hand', cls: 'invoker', tree: 1, tier: 0, name: 'Reaching Hand', type: 'bolt', elem: 'spirit', stat: 'spi', icon: ['hand', '#fff2c8'],
-    desc: 'A spectral hand of the Thousand-Armed One reaches out and strikes, driving foes back.',
-    cost: l => 1, cd: l => 0.9, dmg: R(5, 9), p: l => ({ n: 1 + Math.floor(l / 6), spread: 0.35, speed: 10, pierce: 1, radius: 0.45, knock: 0.9, sprite: 'hand' }), syn: [['arms_of_mercy', 4], ['thousand_arm_descent', 3]] },
-  { id: 'arms_of_mercy', cls: 'invoker', tree: 1, tier: 1, name: 'Arms of Mercy', type: 'orbit', elem: 'phys', stat: 'spi', icon: ['hand', '#e0c080'],
-    desc: 'Spectral arms circle you, sweeping aside all who come near.',
-    cost: l => 6, cd: l => 7, dmg: R(4, 8), p: l => ({ n: 2 + Math.floor(l / 4), orbitR: 1.7, size: 0.5, dur: 6, spin: 3, hitCd: 0.5, knock: 0.6, sprite: 'hand' }), syn: [['reaching_hand', 4], ['grasping_hands', 3]] },
-  { id: 'grasping_hands', cls: 'invoker', tree: 1, tier: 2, name: 'Grasping Hands', type: 'zone', elem: 'void', stat: 'spi', icon: ['hands', '#b77dff'],
-    desc: 'Hands rise from the ground and hold your enemies fast.',
-    cost: l => 6, cd: l => 4, dmg: R(4, 7), p: l => ({ radius: 2.5, dur: 2.5, tick: 0.5, root: 1, place: 'cluster', fx: 'hands' }), syn: [['reaching_hand', 4], ['arms_of_mercy', 3]] },
-  { id: 'thousand_eyes', cls: 'invoker', tree: 1, tier: 3, name: 'Eye in Every Palm', type: 'passive', icon: ['eye', '#fff2c8'],
-    desc: 'Every hand of Avalokiteshvara holds an eye that sees suffering. Your strikes find their mark.',
-    mods: l => ({ crit: 3 + 0.8 * l, el_spirit: 5 + 3 * l, area: 1 * l }) },
-  { id: 'thousand_arm_descent', cls: 'invoker', tree: 1, tier: 4, name: 'Thousand-Armed Descent', type: 'rain', elem: 'spirit', stat: 'spi', icon: ['hands', '#ffe8a0'],
-    desc: 'Countless golden palms descend from the sky, crushing the unrepentant.',
-    cost: l => 14, cd: l => 7, dmg: R(20, 34), p: l => ({ n: 8 + Math.floor(l / 2), area: 6, impact: 1.4, dur: 1.8, delay: 0.4, stun: 0.4, fx: 'palm' }), syn: [['reaching_hand', 5], ['grasping_hands', 4]] },
-
-  { id: 'om_mani', cls: 'invoker', tree: 2, tier: 0, name: 'Om Mani Padme Hum', type: 'aura', elem: 'spirit', stat: 'spi', icon: ['lotus', '#8fe0b0'],
-    desc: 'The six-syllable mantra surrounds you, restoring life to you and your guardians and clearing the mind.',
-    cost: l => 0, cd: l => 1, p: l => ({ radius: 3.5 }), mods: l => ({ lifeRegen: 1 + 0.7 * l, manaRegen: 5 + 2 * l, minionRegen: 1 + 0.7 * l }) },
-  { id: 'tara_mercy', cls: 'invoker', tree: 2, tier: 1, name: "Tara's Mercy", type: 'heal', elem: 'spirit', stat: 'spi', icon: ['drop', '#4fd38f'],
-    desc: 'Green Tara, swift saviour, answers. You and your guardians are healed and a wave of light strikes nearby foes.',
-    cost: l => 6, cd: l => 8, dmg: R(6, 10), p: l => ({ heal: 10 + 2 * l, radius: 3.2, speed: 10 }), syn: [['om_mani', 4]] },
-  { id: 'weight_karma', cls: 'invoker', tree: 2, tier: 2, name: 'Weight of Karma', type: 'curse', elem: 'void', stat: 'spi', icon: ['scale', '#b77dff'],
-    desc: 'The deeds of nearby foes weigh upon them. They move slowly and take more damage from every source.',
-    cost: l => 0, cd: l => 0.5, p: l => ({ radius: 4.2 + 0.05 * l, curse: Math.min(60, 15 + 2 * l), slow: 20 }) },
-  { id: 'bodhicitta', cls: 'invoker', tree: 2, tier: 3, name: 'Bodhicitta', type: 'passive', icon: ['heart', '#ffb0c0'],
-    desc: 'The awakened heart that vows to free all beings. It shields you and all who stand with you.',
-    mods: l => ({ resAll: 5 + 1.5 * l, minionLife: 10 + 4 * l, life: 3 * l }) },
-  { id: 'medicine_buddha', cls: 'invoker', tree: 2, tier: 4, name: "Medicine Buddha's Light", type: 'nova', elem: 'spirit', stat: 'spi', icon: ['lotus', '#3a6ae8'],
-    desc: 'The lapis radiance of Bhaisajyaguru heals you and sears everything impure.',
-    cost: l => 18, cd: l => 12, dmg: R(35, 60), p: l => ({ radius: 6, speed: 8, heal: 20, color: '#4a7aff' }), syn: [['tara_mercy', 5], ['om_mani', 4]] },
 
   /* ---------------- KYUDO ARCHER ---------------- */
   { id: 'true_arrow', cls: 'archer', tree: 0, tier: 0, name: 'True Arrow', type: 'bolt', elem: 'phys', stat: 'dex', attack: 1, icon: ['arrow', '#e8e0d0'],
@@ -1050,8 +1021,8 @@ const AFFIX = [
   { k: 'costRed', pre: 0, s: ['neck', 'head'], t: [[16, 5, 10, 'of Frugality']] },
   { k: 'projCount', pre: 0, s: ['neck', 'weapon', 'offhand'], t: [[32, 1, 1, 'of Multitudes']], rare: 1 }
 ];
-const TREE_ADJ = { vajra: ['Thunderous', 'Ironclad', 'Wrathful'], sage: ['Insightful', 'Empty', 'Mandalic'], invoker: ['Protective', 'Many-Armed', 'Merciful'], archer: ['Archer\'s', 'Elemental', 'Windborne'], chod: ['Charnel', 'Severing', 'Dancing'] };
-const CLS_ADJ = { vajra: ["Vajra-Adept's", "Vajra-Master's"], sage: ["Scholar's", "Sage's"], invoker: ["Summoner's", "Invoker's"], archer: ["Fletcher's", "Kyudo Master's"], chod: ["Yogini's", "Machig's"] };
+const TREE_ADJ = { vajra: ['Thunderous', 'Ironclad', 'Wrathful'], sage: ['Insightful', 'Empty', 'Mandalic'], archer: ['Archer\'s', 'Elemental', 'Windborne'], chod: ['Charnel', 'Severing', 'Dancing'] };
+const CLS_ADJ = { vajra: ["Vajra-Adept's", "Vajra-Master's"], sage: ["Scholar's", "Sage's"], archer: ["Fletcher's", "Kyudo Master's"], chod: ["Yogini's", "Machig's"] };
 const RARE_A = ['Dharma', 'Lotus', 'Karma', 'Sutra', 'Bodhi', 'Stupa', 'Mandala', 'Dragon', 'Tiger', 'Crane', 'Garuda', 'Naga', 'Vajra', 'Moon', 'Sun', 'Ember', 'Frost', 'Storm', 'Jade', 'Iron', 'Cinder', 'Ghost', 'Bone', 'Ash', 'Cloud', 'Pearl', 'Shadow', 'Thunder'];
 const RARE_B = { weapon: ['Bite', 'Song', 'Fang', 'Spire', 'Word', 'Edge', 'Call', 'Wrath', 'Needle', 'Thorn'], offhand: ['Ward', 'Chime', 'Turn', 'Guard', 'Aegis', 'Echo'], head: ['Crown', 'Brow', 'Visage', 'Veil', 'Hood', 'Halo'], body: ['Mantle', 'Shroud', 'Vestment', 'Skin', 'Hide', 'Cloak'], hands: ['Grip', 'Grasp', 'Palm', 'Mudra', 'Touch'], waist: ['Knot', 'Cord', 'Coil', 'Sash', 'Girdle'], feet: ['Stride', 'Path', 'Step', 'Road', 'Trail'], neck: ['Heart', 'Eye', 'Seal', 'Talisman', 'Amulet', 'Charm'], ring: ['Circle', 'Band', 'Loop', 'Coil', 'Spiral', 'Knot'] };
 
@@ -1065,8 +1036,6 @@ const UNIQUES = [
   { id: 'u_discern', base: 'w_sword2', q: 10, name: 'Blade of Discernment', mods: { ed: 90, crit: 8, dex: 8, el_spirit: 20 }, lore: 'It knows what is real and what is merely vivid.' },
   { id: 'u_mist_yumi', base: 'w_bow2', q: 10, name: 'Yumi of the Morning Mist', mods: { ed: 100, dex: 10, castSpeed: 10, pierce: 15 }, lore: 'The archer does not aim. The arrow does not miss.' },
   { id: 'u_deer_bow', base: 'w_bow4', q: 32, name: 'Bow of the Deer Park', mods: { ed: 160, 'sk_cls:archer': 2, projCount: 1, crit: 8, critDmg: 40 }, lore: 'Strung where the first sermon was spoken.' },
-  { id: 'u_108', base: 'w_mala2', q: 12, name: 'Mala of One Hundred and Eight', mods: { 'sk_cls:invoker': 1, minionDmg: 40, minionLife: 40, mana: 20, manaRegen: 25 }, lore: 'One bead for each affliction of the mind.' },
-  { id: 'u_charnel_rosary', base: 'w_mala4', q: 32, name: 'Rosary of the Charnel Ground', mods: { 'sk_tree:invoker:0': 3, minionDmg: 80, lifeOnKill: 6, el_void: 30 }, lore: 'Carved from the bones of those who meditated on death until they no longer feared it.' },
   { id: 'u_kangling', base: 'w_khatvanga2', q: 12, name: 'Khatvanga of the Cemetery', mods: { ed: 90, 'sk_cls:chod': 1, el_void: 30, lifeLeech: 4, spi: 8 }, lore: 'Three heads upon it: one fresh, one withered, one bare bone.' },
   { id: 'u_machig', base: 'w_khatvanga5', q: 44, name: "Machig Labdrön's Staff", mods: { ed: 170, 'sk_cls:chod': 2, el_void: 60, 'sk_tree:chod:0': 2, lifeOnKill: 10, castSpeed: 15 }, lore: 'She taught that the demon is the thing you cling to.' },
   { id: 'u_damaru', base: 'o_bell2', q: 22, name: 'Damaru of Two Skulls', mods: { 'sk_tree:chod:1': 2, mana: 30, minionDmg: 40, castSpeed: 10, resAll: 10 }, lore: 'Its two faces are made from two skulls, and its rhythm is a heartbeat.' },
@@ -2015,7 +1984,6 @@ function buildCreature(key, L, nFrames = 5, scale) {
 const HERO_LOOK = {
   vajra: { body: 'human', h: 46, skin: '#c68a5a', cloth: '#d9822b', cloth2: '#a8481a', head: 'bald', weapon: 'vajra', bareArm: 1, beads: '#6a3a1a', bulky: 1, feet: '#6a4424' },
   sage: { body: 'human', h: 46, skin: '#d8a27a', cloth: '#7a1f2b', cloth2: '#d8a53a', head: 'bun', weapon: 'flamesword', feet: '#3a1a12' },
-  invoker: { body: 'human', h: 46, skin: '#b87a50', cloth: '#8e2418', cloth2: '#e0b23a', head: 'pandita', weapon: 'mala', beads: '#e8d8b0', feet: '#2a1a12' },
   archer: { body: 'human', h: 46, skin: '#d6a07a', cloth: '#23262c', cloth2: '#e8e2d2', head: 'kasa', weapon: 'yumi', noSash: 0, feet: '#e8e0d0' },
   chod: { body: 'human', h: 46, skin: '#c8906a', cloth: '#e8e2d2', cloth2: '#8a1a1a', head: 'yogini', weapon: 'khatvanga', beads: '#f0e6d0', feet: '#3a2a1a', bareArm: 1 }
 };
@@ -2571,7 +2539,7 @@ function invAdd(C, it) { const i = C.inv.indexOf(null); if (i < 0) return false;
 function invFree(C) { return C.inv.filter(x => !x).length; }
 
 /* saves */
-function saveIndex() { return Store.get('wos_index', []); }
+function saveIndex() { return Store.get('wos_index', []).filter(x => x && x.cls !== 'invoker'); }
 function saveChar(C) {
   if (!C) return;
   const data = JSON.stringify(C, (k, v) => k.startsWith('_') ? undefined : v);
@@ -2579,7 +2547,7 @@ function saveChar(C) {
   const idx = saveIndex().filter(x => x.id !== C.id); idx.unshift({ id: C.id, name: C.name, cls: C.cls, level: C.level, realm: C.maxRealm, done: C.done, t: Date.now() });
   Store.set('wos_index', idx);
 }
-function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C) return null; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
+function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C || C.cls === 'invoker') return null; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
 function deleteChar(id) { Store.del('wos_' + id); Store.set('wos_index', saveIndex().filter(x => x.id !== id)); }
 
 /* ================= combat core ================= */
@@ -2701,10 +2669,11 @@ function doProc(p, x, y) {
 function dropOrb(x, y, xp) { const A = G.A; if (A.orbs.length > 260) { const o = A.orbs[Math.floor(Math.random() * A.orbs.length)]; o.xp += xp; return; } A.orbs.push({ x: x + rand(-0.2, 0.2), y: y + rand(-0.2, 0.2), xp, t: 0, big: xp > 60 }); }
 function dropLoot(e) {
   const A = G.A, C = G.C, S = G.P.S; const L = e.lvl; const mf = S.mf + (G.buffs.fortune ? 100 : 0);
+  /* items drop only from bosses (and named cave bosses); everything else is gold, potions and vendors */
   let n = 0, bonus = 0;
-  if (e.boss) { n = 4; bonus = 1.2; } else if (e.treasure) { n = 3; bonus = 1.2; } else if (e.elite === 2) { n = 1 + (Math.random() < 0.4 ? 1 : 0) + (e.uniq ? 1 : 0); bonus = 0.6; } else if (e.elite === 1) { n = Math.random() < 0.35 ? 1 : 0; bonus = 0.3; } else if (Math.random() < (e.spawned ? 0.012 : 0.028)) n = 1;
+  if (e.boss) { n = 5; bonus = 1.2; } else if (e.treasure) { n = 2; bonus = 1.0; } else if (e.uniq && e.elite === 2) { n = 1; bonus = 0.8; }
   for (let i = 0; i < n; i++) spawnGroundItem(genItem(L + (e.boss ? 2 : 0), { mf, bonus, cls: C.cls }), e.x, e.y);
-  if (Math.random() < (e.elite ? 0.1 : 0.005)) spawnGroundItem(genGem(L), e.x, e.y);
+  if (e.boss ? Math.random() < 0.6 : e.uniq && e.elite === 2 && Math.random() < 0.3) spawnGroundItem(genGem(L), e.x, e.y);
   if (Math.random() < (e.elite ? 1 : e.spawned ? 0.12 : 0.22)) { const amt = Math.round(L * rand(2, 5) * (1 + S.gf / 100) * (e.elite ? 3 : 1)); A.golds.push({ x: e.x + rand(-0.4, 0.4), y: e.y + rand(-0.4, 0.4), amt, t: 0 }); }
   if (Math.random() < (e.elite ? 0.3 : 0.03)) A.pots.push({ x: e.x + rand(-0.4, 0.4), y: e.y + rand(-0.4, 0.4), kind: Math.random() < 0.1 ? 'rej' : Math.random() < 0.55 ? 'hp' : 'mp', t: 0 });
 }
@@ -2884,7 +2853,6 @@ function mantraUlt() {
   G.fx.push({ type: 'mantraText', x: P.x, y: P.y, t: 0, life: 2.4, cls: C.cls });
   if (C.cls === 'vajra') { const list = enemiesNear(P.x, P.y, 11); for (const e of list) { const [v, c] = rollDmg([base[0] * 2.4, base[1] * 2.4], S); hitEnemy(e, v, 'light', { crit: c, stun: 1.5 }); } for (let i = 0; i < 18; i++) { const e = list[i % Math.max(1, list.length)]; const x = e ? e.x : P.x + rand(-6, 6), y = e ? e.y : P.y + rand(-6, 6); addFx({ type: 'bolt', x, y, life: 0.4 + i * 0.02, col: '#fff7a0' }); } }
   if (C.cls === 'sage') { addFx({ type: 'sweep', x: P.x, y: P.y, r: 7.5, life: 1.1, dmg: [base[0] * 3, base[1] * 3], elem: 'spirit', hit: new Set(), follow: 1, big: 1, turns: 2 }); }
-  if (C.cls === 'invoker') { healAll(100); addNova(P.x, P.y, 8, [base[0] * 1.6, base[1] * 1.6], 'spirit', { speed: 10, color: '#8affd0' }); for (let i = 0; i < 8; i++) G.orbits.push({ sid: 'ult', a: i / 8 * TAU, R: 2.6, size: 0.8, spin: 2.6, t: 0, life: 10, dmg: [base[0] * 0.5, base[1] * 0.5], elem: 'spirit', hitCd: 0.35, hits: new Map(), sprite: 'hand', knock: 0.6 }); }
   if (C.cls === 'chod') { healAll(50); addNova(P.x, P.y, 8, [base[0] * 1.9, base[1] * 1.9], 'void', { speed: 9, fear: 2, curse: 50, curseDur: 6, color: '#ff3a4a' }); for (let i = 0; i < 24; i++) addFx({ type: 'impact', x: P.x + rand(-6, 6), y: P.y + rand(-6, 6), r: 1.2, life: 0.5 + i * 0.03, col: '#ff3a2a', kind: 'feast' }); }
   if (C.cls === 'archer') { const R = { impacts: [], dmg: [base[0] * 0.55, base[1] * 0.55], elem: 'phys', r: 1.0, fx: 'arrow' }; const list = enemiesNear(P.x, P.y, 9); for (let i = 0; i < 90; i++) { let x, y; if (list.length && Math.random() < 0.7) { const e = pick(list); x = e.x + rand(-0.5, 0.5); y = e.y + rand(-0.5, 0.5); } else { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 8.5; x = P.x + Math.cos(a) * r; y = P.y + Math.sin(a) * r; } R.impacts.push({ x, y, t: -rand(0, 3) - 0.3, delay: 0.3 }); } G.rains.push(R); }
 }
@@ -3366,9 +3334,8 @@ function updatePickups(dt) {
 }
 function openChest(c) {
   const A = G.A, C = G.C, S = G.P.S; c.open = 1; AU.play('drop_magic', 1); AU.play('coin', 0.8);
-  const n = c.big ? randi(2, 3) : randi(1, 2); for (let i = 0; i < n; i++) spawnGroundItem(genItem(A.lvl + (c.big ? 2 : 0), { mf: S.mf + (c.big ? 80 : 20), bonus: c.big ? 0.6 : 0.2, cls: C.cls }), c.x, c.y);
-  if (Math.random() < 0.25) spawnGroundItem(genGem(A.lvl), c.x, c.y);
-  for (let i = 0; i < (c.big ? 5 : 2); i++) A.golds.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), amt: Math.round(A.lvl * rand(4, 9) * (1 + S.gf / 100)), t: 0 });
+  /* chests hold gold and potions only; gear comes from bosses and vendors */
+  for (let i = 0; i < (c.big ? 5 : 2); i++) A.golds.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), amt: Math.round(A.lvl * rand(6, 13) * (1 + S.gf / 100)), t: 0 });
   if (Math.random() < 0.5) A.pots.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), kind: pick(['hp', 'mp', 'hp']), t: 0 });
 }
 function useShrine(s) {
@@ -3409,9 +3376,9 @@ function claimQuest(q) {
 /* ---------- vendors ---------- */
 function vendorLvl() { return Math.max(1, Math.min(G.C.level + 1, realmLvl(G.realmIdx, 9))); }
 function genVendors() {
-  const L = vendorLvl(); const C = G.C; const mk = (n, slots, magicP) => { const out = []; for (let i = 0; i < n; i++) { const slot = pick(slots); const r = Math.random(); const rar = r < 0.05 ? 2 : r < magicP ? 1 : 0; out.push(genItem(L - randi(0, 3), { slot, rar, cls: C.cls })); } return out; };
-  G.vendor.merchant = mk(12, ['neck', 'ring', 'offhand', 'waist', 'weapon'], 0.7);
-  G.vendor.smith = mk(16, ['weapon', 'weapon', 'head', 'body', 'hands', 'feet', 'offhand', 'waist'], 0.45);
+  const L = vendorLvl(); const C = G.C; const mk = (n, slots, magicP) => { const out = []; for (let i = 0; i < n; i++) { const slot = pick(slots); const r = Math.random(); const rar = r < 0.14 ? 2 : r < magicP ? 1 : 0; out.push(genItem(L - randi(0, 3), { slot, rar, cls: C.cls })); } return out; };
+  G.vendor.merchant = mk(14, ['neck', 'ring', 'offhand', 'waist', 'weapon'], 0.8);
+  G.vendor.smith = mk(18, ['weapon', 'weapon', 'head', 'body', 'hands', 'feet', 'offhand', 'waist'], 0.65);
   G.vendor.gems = [genGem(L), genGem(L), genGem(L), genGem(L)]; G.vendor.merchant.push(...G.vendor.gems);
   for (let i = 0; i < 3; i++) { const it = genItem(L - randi(0, 3), { slot: pick(['weapon', 'body', 'head', 'offhand']), rar: 0 }); it.rar = 5; it.sockets = randi(1, MAX_SOCK[it.slot]); it.gems = []; G.vendor.smith.push(it); }
 }
@@ -3879,8 +3846,8 @@ UI.hud = function () {
   $('xpbar').firstElementChild.style.width = (C.xp / xpNext(C.level) * 100).toFixed(1) + '%';
   $('potHP').querySelector('b').textContent = C.pots.hp; $('potMP').querySelector('b').textContent = C.pots.mp;
   UI.refreshSkillbar();
-  const els = $('skillbar').children;
-  for (let i = 0; i < 6; i++) { const id = C.slots[i]; const el = els[i]; if (!id) { el.querySelector('.cd').style.setProperty('--p', '0%'); continue; } const s = SKILLS[id]; const cd = P.cd[id] || 0, mx = P.cdMax[id] || (s.cd ? s.cd(S.lv[id] || 1) : 1); const pct = s.type === 'aura' || s.type === 'curse' ? 0 : clamp(cd / mx, 0, 1) * 100; el.querySelector('.cd').style.setProperty('--p', pct.toFixed(0) + '%'); el.classList.toggle('nomana', !!P.noMana[id]); }
+  const els = $('skillbar').children; const calm = G.A && G.A.kind === 'town';
+  for (let i = 0; i < 6; i++) { const id = C.slots[i]; const el = els[i]; if (calm) { if (el._calm !== 1) { el._calm = 1; el.querySelector('.cd').style.setProperty('--p', '0%'); el.classList.remove('nomana'); } continue; } el._calm = 0; if (!id) { el.querySelector('.cd').style.setProperty('--p', '0%'); continue; } const s = SKILLS[id]; const cd = P.cd[id] || 0, mx = P.cdMax[id] || (s.cd ? s.cd(S.lv[id] || 1) : 1); const pct = s.type === 'aura' || s.type === 'curse' ? 0 : clamp(cd / mx, 0, 1) * 100; el.querySelector('.cd').style.setProperty('--p', pct.toFixed(0) + '%'); el.classList.toggle('nomana', !!P.noMana[id]); }
   // mantra
   const mb = $('mantra'); const mc = mb.querySelector('canvas'); const g = mc.getContext('2d'); const f = C.mantra / 100;
   if (UI._mf !== Math.round(f * 100) || f >= 1) { UI._mf = Math.round(f * 100); g.clearRect(0, 0, 96, 96); g.fillStyle = rgrad(g, 48, 48, 4, 48, [[0, '#2a1a0a'], [1, '#0a0604']]); g.fillRect(0, 0, 96, 96); g.strokeStyle = '#ffd060'; g.lineWidth = 7; g.beginPath(); g.arc(48, 48, 40, -Math.PI / 2, -Math.PI / 2 + TAU * f); g.stroke(); g.save(); g.translate(16, 16); g.scale(1, 1); drawSymbol(g, 'lotus', f >= 1 ? '#ffe08a' : '#8a7040'); g.restore(); }
@@ -3996,13 +3963,13 @@ document.addEventListener('click', e => {
     case 'askq': UI.askQ = v; AU.play('click'); UI.render(); break;
   }
 });
-document.addEventListener('contextmenu', e => { const t = e.target.closest('[data-a="inv"],[data-a="eq"]'); if (!t) return; e.preventDefault(); const C = G.C; if (t.dataset.a === 'inv') { const it = C.inv[+t.dataset.v]; if (!it) return; if (UI.panel === 'vendor') { UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doSell(); return; } if (UI.panel === 'stash') { UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doStashMove(); return; } UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doEquip(); } else { const it = C.equip[t.dataset.v]; if (!it) return; UI.sel = { src: 'eq', slot: t.dataset.v, it }; doUnequip(); } });
+document.addEventListener('contextmenu', e => { const t = e.target.closest('[data-a="inv"],[data-a="eq"],[data-a="vd"],[data-a="st"]'); if (!t) return; e.preventDefault(); const C = G.C; if (t.dataset.a === 'vd') { const it = UI.vstock()[+t.dataset.v]; if (!it) return; UI.sel = { src: 'vendor', idx: +t.dataset.v, it }; doBuy(); return; } if (t.dataset.a === 'st') { const it = C.stash[+t.dataset.v]; if (!it) return; UI.sel = { src: 'stash', idx: +t.dataset.v, it }; doStashMove(); return; } if (t.dataset.a === 'inv') { const it = C.inv[+t.dataset.v]; if (!it) return; if (UI.panel === 'vendor') { UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doSell(); return; } if (UI.panel === 'stash') { UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doStashMove(); return; } UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doEquip(); } else { const it = C.equip[t.dataset.v]; if (!it) return; UI.sel = { src: 'eq', slot: t.dataset.v, it }; doUnequip(); } });
 document.addEventListener('dblclick', e => { const t = e.target.closest('[data-a="inv"]'); if (!t || UI.panel !== 'inv') return; const C = G.C; const it = C.inv[+t.dataset.v]; if (!it) return; UI.sel = { src: 'inv', idx: +t.dataset.v, it }; doEquip(); });
 
 function itemAt(a, v) { const C = G.C; if (a === 'inv') return C.inv[+v]; if (a === 'eq') return C.equip[v]; if (a === 'st') return C.stash[+v]; if (a === 'vd') return UI.vstock()[+v]; return null; }
 document.addEventListener('pointerover', e => {
   if (e.pointerType !== 'mouse' || !UI.panel) return; const t = e.target.closest('[data-a]'); if (!t) return; const a = t.dataset.a;
-  if (['inv', 'eq', 'st', 'vd'].includes(a)) { const tb = $('tipbox'); if (!tb) return; const it = itemAt(a, t.dataset.v); if (!it || (UI.sel && UI.sel.it === it)) return; const cmp = a !== 'eq' && it.slot && it.slot !== 'gem' ? (it.slot === 'ring' ? 'ring1' : it.slot) : undefined; let price = ''; if (UI.panel === 'vendor') price = a === 'vd' ? `<div class="gold" style="margin-top:6px">Price: ${fmtFull(it.gem ? itemValue(it) * 2 : buyPrice(it))}</div>` : !it.qitem ? `<div class="gold" style="margin-top:6px">Sells for: ${fmtFull(sellPrice(it))}</div>` : ''; tb.innerHTML = `<div class="itip">${itemTipHTML(it, G.C, cmp)}${price}<div class="cmp">Click to select${UI.panel === 'inv' ? ', right-click to equip' : UI.panel === 'vendor' ? ', right-click to sell' : ''}</div></div>`; UI._hover = 1; }
+  if (['inv', 'eq', 'st', 'vd'].includes(a)) { const tb = $('tipbox'); if (!tb) return; const it = itemAt(a, t.dataset.v); if (!it || (UI.sel && UI.sel.it === it)) return; const cmp = a !== 'eq' && it.slot && it.slot !== 'gem' ? (it.slot === 'ring' ? 'ring1' : it.slot) : undefined; let price = ''; if (UI.panel === 'vendor') price = a === 'vd' ? `<div class="gold" style="margin-top:6px">Price: ${fmtFull(it.gem ? itemValue(it) * 2 : buyPrice(it))}</div>` : !it.qitem ? `<div class="gold" style="margin-top:6px">Sells for: ${fmtFull(sellPrice(it))}</div>` : ''; tb.innerHTML = `<div class="itip">${itemTipHTML(it, G.C, cmp)}${price}<div class="cmp">Click to select${UI.panel === 'inv' ? ', right-click to equip' : UI.panel === 'vendor' ? ', right-click to sell' : UI.panel === 'stash' ? ', right-click to move' : ''}</div></div>`; UI._hover = 1; }
   if (a === 'sknode' && UI.panel === 'skills') { const box = $('skinfoBox'); if (!box || t.dataset.v === UI.skSel) return; box.innerHTML = skillInfoHTML(t.dataset.v, true); UI._hover = 1; }
 });
 document.addEventListener('pointerout', e => {
@@ -4053,7 +4020,7 @@ function tipBox() { return `<div id="tipbox">${tipInner()}</div>`; }
 function tipInner() { const sel = UI.sel; const C = G.C; if (!sel) return `<div class="itip" style="color:var(--dim);font-family:var(--f-body);font-style:italic">${UI.msg ? `<span style="color:var(--gold-hi);font-style:normal">${esc(UI.msg)}</span>` : 'Select an item to see its properties.'}</div>`; const cmpSlot = sel.src !== 'eq' && sel.it.slot && sel.it.slot !== 'gem' ? (sel.it.slot === 'ring' ? 'ring1' : sel.it.slot) : undefined; return `<div class="itip tipdock">${itemTipHTML(sel.it, C, cmpSlot)}${UI.msg ? `<div style="color:var(--gold-hi);margin-top:6px">${esc(UI.msg)}</div>` : ''}${itemActions(sel)}</div>`; }
 function dollHTML() { const C = G.C; return `<div class="doll">${SLOTS.map(s => `<div style="grid-area:${s}">${slotHTML(C.equip[s], `data-a="eq" data-v="${s}" aria-label="${SLOT_NAME[s]}"`, `<span class="ghost">${SLOT_NAME[s]}</span>`)}</div>`).join('')}</div>`; }
 function bagHTML(src = 'inv') { const C = G.C; return `<div class="grid">${C.inv.map((it, i) => slotHTML(it, `data-a="inv" data-v="${i}"`)).join('')}</div>`; }
-function invPanelHTML() { const C = G.C; return `<div class="panel stone">${ph('Inventory')}<div class="pb"><div class="invwrap two"><div>${dollHTML()}<div class="goldline" style="justify-content:center;margin-top:10px"><span class="coin"></span>${fmtFull(C.gold)} gold</div></div><div><div class="sec">Bag</div>${bagHTML()}${tipBox()}</div></div></div></div>`; }
+function invPanelHTML() { const C = G.C; return `<div class="panel wide stone">${ph('Inventory')}<div class="pb"><div class="invwrap three"><div>${dollHTML()}<div class="goldline" style="justify-content:center;margin-top:10px"><span class="coin"></span>${fmtFull(C.gold)} gold</div></div><div><div class="sec">Bag</div>${bagHTML()}</div><div class="tipcol">${tipBox()}</div></div></div></div>`; }
 function charPanelHTML() {
   const C = G.C, S = charStats(C), K = CLASSES[C.cls]; const row = (k, v) => `<div class="k">${k}</div><div class="v">${v}</div>`;
   const res = e => { const v = S['R_' + e]; return `<span style="color:${v >= 75 ? 'var(--good)' : v < 0 ? 'var(--bad)' : 'inherit'}">${v}%</span>`; };
@@ -4086,7 +4053,7 @@ function skillPanelHTML() {
   const cols = [0, 1, 2].map(t => { const list = treeSkills(C.cls, t); return `<div class="tree"><h4>${K.trees[t]}</h4>${list.map(s => { const h = C.skills[s.id] || 0; const lv = S.lv[s.id] || 0; const pre = prereqOf(s); const avail = C.skillPts > 0 && C.level >= TIER_REQ[s.tier] && (!pre || C.skills[pre.id]) && h < 20; const locked = !h && !avail; const eq = C.slots.includes(s.id); return `<button class="snode ${locked ? 'locked' : ''} ${avail ? 'avail' : ''} ${UI.skSel === s.id ? 'sel' : ''}" data-a="sknode" data-v="${s.id}" aria-label="${esc(s.name)}"><canvas width="64" height="64" data-sk="${s.id}"></canvas>${h || lv ? `<span class="lv">${lv}${lv !== h ? '' : ''}</span>` : ''}${eq ? '<span class="eq" title="Equipped"></span>' : ''}</button>`; }).join('')}</div>`; }).join('');
   const info = `<div id="skinfoBox">${skillInfoHTML(UI.skSel, false)}</div>`;
   const slots = `<div class="slotsbar">${[0, 1, 2, 3, 4, 5].map(i => { const sid = C.slots[i]; return sid ? `<button class="sk" data-a="sknode" data-v="${sid}" title="${esc(SKILLS[sid].name)}" style="padding:0"><canvas width="64" height="64" data-sk="${sid}"></canvas></button>` : '<div class="sk"></div>'; }).join('')}</div>`;
-  return `<div class="panel wide stone">${ph('Skills')}<div class="pb"><div class="pts">${C.skillPts ? `${C.skillPts} skill point${C.skillPts > 1 ? 's' : ''} to spend` : 'No unspent skill points'}</div><div class="sec" style="text-align:center">Equipped · all six cast themselves</div>${slots}<div class="trees">${cols}</div>${info}</div></div>`;
+  return `<div class="panel wide stone">${ph('Skills')}<div class="pb"><div class="pts">${C.skillPts ? `${C.skillPts} skill point${C.skillPts > 1 ? 's' : ''} to spend` : 'No unspent skill points'}</div><div class="sec" style="text-align:center">Equipped · all six cast themselves</div>${slots}<div class="skl"><div class="trees">${cols}</div><div class="infocol">${info}</div></div></div></div>`;
 }
 function skillInfoHTML(id, preview) {
   const C = G.C, S = charStats(C), K = CLASSES[C.cls];
@@ -4152,13 +4119,13 @@ function vendorPanelHTML(role) {
   const C = G.C, S = G.P.S; const stock = UI.vstock(); const name = REALMS[G.realmIdx].npcs[role];
   const pots = role === 'merchant' ? `<div class="sec">Potions · you carry at most ${S.potMax} of each</div><div class="row" style="justify-content:flex-start">${['hp', 'mp', 'rej'].map(k => `<button class="btn small" data-a="potbuy" data-v="${k}"><img alt="" src="${iconURL(itemIconCanvas({ pot: k }, 32))}" style="width:20px;height:20px">${{ hp: 'Healing', mp: 'Mana', rej: 'Rejuvenation' }[k]} (${C.pots[k]}) · ${potPrice(k)}</button>`).join('')}<button class="btn small" data-a="potfill">Fill up</button></div>` : '';
   const gems = role === 'merchant' ? G.vendor.gems : []; const all = stock;
-  return `<div class="panel wide stone">${ph(esc(name))}<div class="pb">${pots}<div class="invwrap two"><div><div class="sec">For sale</div><div class="shopgrid">${all.map((it, i) => slotHTML(it, `data-a="vd" data-v="${i}"`)).join('')}</div></div><div><div class="sec">Your bag · <span class="coin"></span> ${fmtFull(C.gold)}</div>${bagHTML()}</div></div><div style="margin-top:10px">${tipBox()}</div></div></div>`;
+  return `<div class="panel wide stone">${ph(esc(name))}<div class="pb">${pots}<div class="invwrap three"><div><div class="sec">For sale · right-click to buy</div><div class="shopgrid">${all.map((it, i) => slotHTML(it, `data-a="vd" data-v="${i}"`)).join('')}</div></div><div><div class="sec">Your bag · right-click to sell · <span class="coin"></span> ${fmtFull(C.gold)}</div>${bagHTML()}</div><div class="tipcol">${tipBox()}</div></div></div></div>`;
 }
 function gamblePanelHTML() {
   const C = G.C; const types = [['weapon', 'Weapon'], ['offhand', 'Off-hand'], ['head', 'Headwear'], ['body', 'Robe'], ['hands', 'Gloves'], ['waist', 'Sash'], ['feet', 'Footwear'], ['neck', 'Amulet'], ['ring', 'Ring']];
   return `<div class="panel stone">${ph('Gamble')}<div class="pb"><p style="margin-top:0;color:var(--dim)">Pay for an unknown item. Most are magic, some are rare, and a very few are unique.</p><div class="goldline"><span class="coin"></span>${fmtFull(C.gold)} gold</div><div class="row" style="justify-content:flex-start;margin:10px 0">${types.map(([k, n]) => `<button class="btn small" data-a="gamble" data-v="${k}" ${C.gold >= gamblePrice(k) ? '' : 'disabled'}>${n} · ${fmtFull(gamblePrice(k))}</button>`).join('')}</div>${UI.sel ? tipBox() : ''}<div class="sec">Your bag</div>${bagHTML()}</div></div>`;
 }
-function stashPanelHTML() { const C = G.C; return `<div class="panel wide stone">${ph('Stash')}<div class="pb"><div class="invwrap two"><div><div class="sec">Stash</div><div class="grid">${C.stash.map((it, i) => slotHTML(it, `data-a="st" data-v="${i}"`)).join('')}</div></div><div><div class="sec">Bag</div>${bagHTML()}</div></div><div style="margin-top:10px">${tipBox()}</div></div></div>`; }
+function stashPanelHTML() { const C = G.C; return `<div class="panel wide stone">${ph('Stash')}<div class="pb"><div class="invwrap three"><div><div class="sec">Stash</div><div class="grid">${C.stash.map((it, i) => slotHTML(it, `data-a="st" data-v="${i}"`)).join('')}</div></div><div><div class="sec">Bag</div>${bagHTML()}</div><div class="tipcol">${tipBox()}</div></div></div></div>`; }
 function servicePanelHTML(kind) {
   const C = G.C; const cands = []; const okSock = it => MAX_SOCK[it.slot] && (it.sockets || 0) < MAX_SOCK[it.slot]; const okImbue = it => it.rar === 0 || (it.rar === 5 && !it.gems.length);
   for (const s of SLOTS) { const it = C.equip[s]; if (it && (it.rar === 0 || it.rar === 5) && (kind === 'imbue' ? okImbue(it) : okSock(it))) cands.push(['eq:' + s, it]); }
@@ -4407,8 +4374,8 @@ function createLoop(dt) {
   g.fillStyle = rgrad(g, cx, cy, 10, 520 * s, [[0, 'rgba(120,60,20,.55)'], [0.5, 'rgba(40,18,6,.4)'], [1, 'rgba(0,0,0,0)']]); g.fillRect(0, 0, W, H);
   g.fillStyle = 'rgba(30,20,14,.9)'; g.beginPath(); g.ellipse(cx, cy + 30 * s, 360 * s, 100 * s, 0, 0, TAU); g.fill();
   CREATE.fig = [];
-  const pos = [[-270, -10], [-145, -62], [0, -84], [145, -62], [270, -10]];
-  const orderI = [0, 1, 2, 3, 4].sort((a, b) => pos[a][1] - pos[b][1]); orderI.forEach(i => { const c = CLASS_IDS[i]; const set = creSet('hero_' + c, HERO_LOOK[c]); const sel = CREATE.cls === c; const [px, py] = pos[i]; const x = cx + px * s, y = cy + py * s + (sel ? 14 * s : 0); const k = s * 2.3 * (sel ? 1.12 : 1); const sp = (px < 0 ? set.frames : set.mframes)[0];
+  const pos = [[-220, -20], [-75, -72], [75, -72], [220, -20]];
+  const orderI = [0, 1, 2, 3].sort((a, b) => pos[a][1] - pos[b][1]); orderI.forEach(i => { const c = CLASS_IDS[i]; const set = creSet('hero_' + c, HERO_LOOK[c]); const sel = CREATE.cls === c; const [px, py] = pos[i]; const x = cx + px * s, y = cy + py * s + (sel ? 14 * s : 0); const k = s * 2.3 * (sel ? 1.12 : 1); const sp = (px < 0 ? set.frames : set.mframes)[0];
     g.globalAlpha = CREATE.cls && !sel ? 0.55 : 1; g.fillStyle = 'rgba(0,0,0,.4)'; g.beginPath(); g.ellipse(x, y, 30 * s, 10 * s, 0, 0, TAU); g.fill(); drawSprScaled(g, sp, x, y + Math.sin(t * 1.5 + i) * s, k);
     if (sel) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.35; g.drawImage(glowSpr('#ffb050', 32), x - 70 * s, y - 150 * s, 140 * s, 170 * s); g.globalCompositeOperation = 'source-over'; }
     g.globalAlpha = 1; CREATE.fig.push({ cls: c, x, y, w: 70 * s, h: 130 * s }); });

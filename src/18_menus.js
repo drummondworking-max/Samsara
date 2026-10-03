@@ -151,8 +151,8 @@ function createLoop(dt) {
   g.fillStyle = rgrad(g, cx, cy, 10, 520 * s, [[0, 'rgba(120,60,20,.55)'], [0.5, 'rgba(40,18,6,.4)'], [1, 'rgba(0,0,0,0)']]); g.fillRect(0, 0, W, H);
   g.fillStyle = 'rgba(30,20,14,.9)'; g.beginPath(); g.ellipse(cx, cy + 30 * s, 360 * s, 100 * s, 0, 0, TAU); g.fill();
   CREATE.fig = [];
-  const pos = [[-270, -10], [-145, -62], [0, -84], [145, -62], [270, -10]];
-  const orderI = [0, 1, 2, 3, 4].sort((a, b) => pos[a][1] - pos[b][1]); orderI.forEach(i => { const c = CLASS_IDS[i]; const set = creSet('hero_' + c, HERO_LOOK[c]); const sel = CREATE.cls === c; const [px, py] = pos[i]; const x = cx + px * s, y = cy + py * s + (sel ? 14 * s : 0); const k = s * 2.3 * (sel ? 1.12 : 1); const sp = (px < 0 ? set.frames : set.mframes)[0];
+  const pos = [[-220, -20], [-75, -72], [75, -72], [220, -20]];
+  const orderI = [0, 1, 2, 3].sort((a, b) => pos[a][1] - pos[b][1]); orderI.forEach(i => { const c = CLASS_IDS[i]; const set = creSet('hero_' + c, HERO_LOOK[c]); const sel = CREATE.cls === c; const [px, py] = pos[i]; const x = cx + px * s, y = cy + py * s + (sel ? 14 * s : 0); const k = s * 2.3 * (sel ? 1.12 : 1); const sp = (px < 0 ? set.frames : set.mframes)[0];
     g.globalAlpha = CREATE.cls && !sel ? 0.55 : 1; g.fillStyle = 'rgba(0,0,0,.4)'; g.beginPath(); g.ellipse(x, y, 30 * s, 10 * s, 0, 0, TAU); g.fill(); drawSprScaled(g, sp, x, y + Math.sin(t * 1.5 + i) * s, k);
     if (sel) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.35; g.drawImage(glowSpr('#ffb050', 32), x - 70 * s, y - 150 * s, 140 * s, 170 * s); g.globalCompositeOperation = 'source-over'; }
     g.globalAlpha = 1; CREATE.fig.push({ cls: c, x, y, w: 70 * s, h: 130 * s }); });

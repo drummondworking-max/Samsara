@@ -117,10 +117,11 @@ function doProc(p, x, y) {
 function dropOrb(x, y, xp) { const A = G.A; if (A.orbs.length > 260) { const o = A.orbs[Math.floor(Math.random() * A.orbs.length)]; o.xp += xp; return; } A.orbs.push({ x: x + rand(-0.2, 0.2), y: y + rand(-0.2, 0.2), xp, t: 0, big: xp > 60 }); }
 function dropLoot(e) {
   const A = G.A, C = G.C, S = G.P.S; const L = e.lvl; const mf = S.mf + (G.buffs.fortune ? 100 : 0);
+  /* items drop only from bosses (and named cave bosses); everything else is gold, potions and vendors */
   let n = 0, bonus = 0;
-  if (e.boss) { n = 4; bonus = 1.2; } else if (e.treasure) { n = 3; bonus = 1.2; } else if (e.elite === 2) { n = 1 + (Math.random() < 0.4 ? 1 : 0) + (e.uniq ? 1 : 0); bonus = 0.6; } else if (e.elite === 1) { n = Math.random() < 0.35 ? 1 : 0; bonus = 0.3; } else if (Math.random() < (e.spawned ? 0.012 : 0.028)) n = 1;
+  if (e.boss) { n = 5; bonus = 1.2; } else if (e.treasure) { n = 2; bonus = 1.0; } else if (e.uniq && e.elite === 2) { n = 1; bonus = 0.8; }
   for (let i = 0; i < n; i++) spawnGroundItem(genItem(L + (e.boss ? 2 : 0), { mf, bonus, cls: C.cls }), e.x, e.y);
-  if (Math.random() < (e.elite ? 0.1 : 0.005)) spawnGroundItem(genGem(L), e.x, e.y);
+  if (e.boss ? Math.random() < 0.6 : e.uniq && e.elite === 2 && Math.random() < 0.3) spawnGroundItem(genGem(L), e.x, e.y);
   if (Math.random() < (e.elite ? 1 : e.spawned ? 0.12 : 0.22)) { const amt = Math.round(L * rand(2, 5) * (1 + S.gf / 100) * (e.elite ? 3 : 1)); A.golds.push({ x: e.x + rand(-0.4, 0.4), y: e.y + rand(-0.4, 0.4), amt, t: 0 }); }
   if (Math.random() < (e.elite ? 0.3 : 0.03)) A.pots.push({ x: e.x + rand(-0.4, 0.4), y: e.y + rand(-0.4, 0.4), kind: Math.random() < 0.1 ? 'rej' : Math.random() < 0.55 ? 'hp' : 'mp', t: 0 });
 }

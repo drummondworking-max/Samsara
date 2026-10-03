@@ -119,9 +119,8 @@ function updatePickups(dt) {
 }
 function openChest(c) {
   const A = G.A, C = G.C, S = G.P.S; c.open = 1; AU.play('drop_magic', 1); AU.play('coin', 0.8);
-  const n = c.big ? randi(2, 3) : randi(1, 2); for (let i = 0; i < n; i++) spawnGroundItem(genItem(A.lvl + (c.big ? 2 : 0), { mf: S.mf + (c.big ? 80 : 20), bonus: c.big ? 0.6 : 0.2, cls: C.cls }), c.x, c.y);
-  if (Math.random() < 0.25) spawnGroundItem(genGem(A.lvl), c.x, c.y);
-  for (let i = 0; i < (c.big ? 5 : 2); i++) A.golds.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), amt: Math.round(A.lvl * rand(4, 9) * (1 + S.gf / 100)), t: 0 });
+  /* chests hold gold and potions only; gear comes from bosses and vendors */
+  for (let i = 0; i < (c.big ? 5 : 2); i++) A.golds.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), amt: Math.round(A.lvl * rand(6, 13) * (1 + S.gf / 100)), t: 0 });
   if (Math.random() < 0.5) A.pots.push({ x: c.x + rand(-1, 1), y: c.y + rand(-1, 1), kind: pick(['hp', 'mp', 'hp']), t: 0 });
 }
 function useShrine(s) {
@@ -162,9 +161,9 @@ function claimQuest(q) {
 /* ---------- vendors ---------- */
 function vendorLvl() { return Math.max(1, Math.min(G.C.level + 1, realmLvl(G.realmIdx, 9))); }
 function genVendors() {
-  const L = vendorLvl(); const C = G.C; const mk = (n, slots, magicP) => { const out = []; for (let i = 0; i < n; i++) { const slot = pick(slots); const r = Math.random(); const rar = r < 0.05 ? 2 : r < magicP ? 1 : 0; out.push(genItem(L - randi(0, 3), { slot, rar, cls: C.cls })); } return out; };
-  G.vendor.merchant = mk(12, ['neck', 'ring', 'offhand', 'waist', 'weapon'], 0.7);
-  G.vendor.smith = mk(16, ['weapon', 'weapon', 'head', 'body', 'hands', 'feet', 'offhand', 'waist'], 0.45);
+  const L = vendorLvl(); const C = G.C; const mk = (n, slots, magicP) => { const out = []; for (let i = 0; i < n; i++) { const slot = pick(slots); const r = Math.random(); const rar = r < 0.14 ? 2 : r < magicP ? 1 : 0; out.push(genItem(L - randi(0, 3), { slot, rar, cls: C.cls })); } return out; };
+  G.vendor.merchant = mk(14, ['neck', 'ring', 'offhand', 'waist', 'weapon'], 0.8);
+  G.vendor.smith = mk(18, ['weapon', 'weapon', 'head', 'body', 'hands', 'feet', 'offhand', 'waist'], 0.65);
   G.vendor.gems = [genGem(L), genGem(L), genGem(L), genGem(L)]; G.vendor.merchant.push(...G.vendor.gems);
   for (let i = 0; i < 3; i++) { const it = genItem(L - randi(0, 3), { slot: pick(['weapon', 'body', 'head', 'offhand']), rar: 0 }); it.rar = 5; it.sockets = randi(1, MAX_SOCK[it.slot]); it.gems = []; G.vendor.smith.push(it); }
 }

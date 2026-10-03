@@ -106,7 +106,7 @@ function invAdd(C, it) { const i = C.inv.indexOf(null); if (i < 0) return false;
 function invFree(C) { return C.inv.filter(x => !x).length; }
 
 /* saves */
-function saveIndex() { return Store.get('wos_index', []); }
+function saveIndex() { return Store.get('wos_index', []).filter(x => x && x.cls !== 'invoker'); }
 function saveChar(C) {
   if (!C) return;
   const data = JSON.stringify(C, (k, v) => k.startsWith('_') ? undefined : v);
@@ -114,5 +114,5 @@ function saveChar(C) {
   const idx = saveIndex().filter(x => x.id !== C.id); idx.unshift({ id: C.id, name: C.name, cls: C.cls, level: C.level, realm: C.maxRealm, done: C.done, t: Date.now() });
   Store.set('wos_index', idx);
 }
-function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C) return null; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
+function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C || C.cls === 'invoker') return null; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
 function deleteChar(id) { Store.del('wos_' + id); Store.set('wos_index', saveIndex().filter(x => x.id !== id)); }

@@ -23,14 +23,6 @@ const CLASSES = {
     start: 'prajna_bolt', weapon: 'w_sword1', robe: '#7a1f2b', robe2: '#d8a53a', skin: '#d8a27a',
     mantra: "Manjushri's Sword"
   },
-  invoker: {
-    name: 'Dharmapala Invoker', title: 'Caller of the Protectors', stat: 'spi',
-    desc: 'A tantric monk who calls the wrathful protectors of the Dharma to fight at his side, and whose compassion mends body and spirit alike.',
-    trees: ['Guardians', 'Thousand Arms', 'Compassion'],
-    base: { str: 15, dex: 20, vit: 22, spi: 23 }, life: [55, 3.1, 3], mana: [16, 1.8, 1.5],
-    start: 'snow_lion', weapon: 'w_mala1', robe: '#8e2418', robe2: '#e0b23a', skin: '#b87a50',
-    mantra: 'Thousand-Armed Mercy'
-  },
   archer: {
     name: 'Kyudo Archer', title: 'Zen Bowman', stat: 'dex',
     desc: 'A Zen monk of the bow, for whom aim, breath and target are one. He fights from afar with arrows of wind, fire and frost, and never wastes a step.',
@@ -48,7 +40,7 @@ CLASSES.chod = {
   start: 'bone_shard', weapon: 'w_khatvanga1', robe: '#e8e2d2', robe2: '#8a1a1a', skin: '#c8906a',
   mantra: 'The Great Feast'
 };
-const CLASS_IDS = ['vajra', 'sage', 'invoker', 'archer', 'chod'];
+const CLASS_IDS = ['vajra', 'sage', 'archer', 'chod'];
 
 /* type: bolt strike nova orbit aura chain zone rain summon beam boomerang sentry buff passive heal */
 const SKILL_LIST = [
@@ -149,55 +141,6 @@ const SKILL_LIST = [
   { id: 'kalachakra', cls: 'sage', tree: 2, tier: 4, name: 'Kalachakra Wheel', type: 'orbit', elem: 'fire', stat: 'spi', icon: ['wheel', '#ffcf4a'],
     desc: 'The Wheel of Time turns about you, its burning spokes sweeping through your enemies.',
     cost: l => 16, cd: l => 10, dmg: R(14, 24), p: l => ({ n: 4 + Math.floor(l / 5), orbitR: 2.8, size: 0.8, dur: 6, spin: 2.4, hitCd: 0.4, sprite: 'sunfire', wheel: 1 }), syn: [['homa_meteor', 5], ['mandala_circle', 5]] },
-
-  /* ---------------- DHARMAPALA INVOKER ---------------- */
-  { id: 'snow_lion', cls: 'invoker', tree: 0, tier: 0, name: 'Snow Lion', type: 'summon', elem: 'phys', stat: 'spi', icon: ['lion', '#e8f0ff'],
-    desc: 'Call a snow lion of the high mountains to fight at your side. More lions answer as the skill grows.',
-    cost: l => 5, cd: l => 3, dmg: R(4, 8), p: l => ({ kind: 'snow_lion', max: Math.min(5, 1 + Math.floor(l / 4)), hp: 40 * (1 + 0.25 * (l - 1)) }), syn: [['garuda', 3], ['om_mani', 3]] },
-  { id: 'guardian_mastery', cls: 'invoker', tree: 0, tier: 1, name: 'Guardian Mastery', type: 'passive', icon: ['deity', '#e0b23a'],
-    desc: 'Your bond with the protectors deepens. Your summoned guardians hit harder and endure more.',
-    mods: l => ({ minionDmg: 15 + 7 * l, minionLife: 20 + 8 * l }) },
-  { id: 'garuda', cls: 'invoker', tree: 0, tier: 2, name: 'Garuda', type: 'summon', elem: 'fire', stat: 'spi', icon: ['bird', '#ff9a3a'],
-    desc: 'The great sun-bird, devourer of serpents, circles above and rains burning feathers on your foes.',
-    cost: l => 8, cd: l => 5, dmg: R(6, 10), p: l => ({ kind: 'garuda', max: Math.min(3, 1 + Math.floor(l / 7)), hp: 34 * (1 + 0.25 * (l - 1)) }), syn: [['snow_lion', 3], ['guardian_mastery', 2]] },
-  { id: 'naga', cls: 'invoker', tree: 0, tier: 3, name: 'Naga Guardian', type: 'summon', elem: 'void', stat: 'spi', icon: ['snake', '#4fd38f'],
-    desc: 'A serpent-king who once sheltered the Buddha now shelters you, spitting venom that slows.',
-    cost: l => 10, cd: l => 6, dmg: R(8, 14), p: l => ({ kind: 'naga', max: Math.min(3, 1 + Math.floor(l / 8)), hp: 60 * (1 + 0.25 * (l - 1)) }), syn: [['garuda', 3], ['snow_lion', 3]] },
-  { id: 'mahakala', cls: 'invoker', tree: 0, tier: 4, name: 'Invoke Mahakala', type: 'summon', elem: 'phys', stat: 'spi', icon: ['deity', '#2a3aa8'],
-    desc: 'The Great Black One descends for a time, crushing everything around him.',
-    cost: l => 20, cd: l => 22, dmg: R(45, 70), p: l => ({ kind: 'mahakala', max: 1, hp: 300 * (1 + 0.25 * (l - 1)), dur: 10 + 0.3 * l }), syn: [['guardian_mastery', 4], ['naga', 3]] },
-
-  { id: 'reaching_hand', cls: 'invoker', tree: 1, tier: 0, name: 'Reaching Hand', type: 'bolt', elem: 'spirit', stat: 'spi', icon: ['hand', '#fff2c8'],
-    desc: 'A spectral hand of the Thousand-Armed One reaches out and strikes, driving foes back.',
-    cost: l => 1, cd: l => 0.9, dmg: R(5, 9), p: l => ({ n: 1 + Math.floor(l / 6), spread: 0.35, speed: 10, pierce: 1, radius: 0.45, knock: 0.9, sprite: 'hand' }), syn: [['arms_of_mercy', 4], ['thousand_arm_descent', 3]] },
-  { id: 'arms_of_mercy', cls: 'invoker', tree: 1, tier: 1, name: 'Arms of Mercy', type: 'orbit', elem: 'phys', stat: 'spi', icon: ['hand', '#e0c080'],
-    desc: 'Spectral arms circle you, sweeping aside all who come near.',
-    cost: l => 6, cd: l => 7, dmg: R(4, 8), p: l => ({ n: 2 + Math.floor(l / 4), orbitR: 1.7, size: 0.5, dur: 6, spin: 3, hitCd: 0.5, knock: 0.6, sprite: 'hand' }), syn: [['reaching_hand', 4], ['grasping_hands', 3]] },
-  { id: 'grasping_hands', cls: 'invoker', tree: 1, tier: 2, name: 'Grasping Hands', type: 'zone', elem: 'void', stat: 'spi', icon: ['hands', '#b77dff'],
-    desc: 'Hands rise from the ground and hold your enemies fast.',
-    cost: l => 6, cd: l => 4, dmg: R(4, 7), p: l => ({ radius: 2.5, dur: 2.5, tick: 0.5, root: 1, place: 'cluster', fx: 'hands' }), syn: [['reaching_hand', 4], ['arms_of_mercy', 3]] },
-  { id: 'thousand_eyes', cls: 'invoker', tree: 1, tier: 3, name: 'Eye in Every Palm', type: 'passive', icon: ['eye', '#fff2c8'],
-    desc: 'Every hand of Avalokiteshvara holds an eye that sees suffering. Your strikes find their mark.',
-    mods: l => ({ crit: 3 + 0.8 * l, el_spirit: 5 + 3 * l, area: 1 * l }) },
-  { id: 'thousand_arm_descent', cls: 'invoker', tree: 1, tier: 4, name: 'Thousand-Armed Descent', type: 'rain', elem: 'spirit', stat: 'spi', icon: ['hands', '#ffe8a0'],
-    desc: 'Countless golden palms descend from the sky, crushing the unrepentant.',
-    cost: l => 14, cd: l => 7, dmg: R(20, 34), p: l => ({ n: 8 + Math.floor(l / 2), area: 6, impact: 1.4, dur: 1.8, delay: 0.4, stun: 0.4, fx: 'palm' }), syn: [['reaching_hand', 5], ['grasping_hands', 4]] },
-
-  { id: 'om_mani', cls: 'invoker', tree: 2, tier: 0, name: 'Om Mani Padme Hum', type: 'aura', elem: 'spirit', stat: 'spi', icon: ['lotus', '#8fe0b0'],
-    desc: 'The six-syllable mantra surrounds you, restoring life to you and your guardians and clearing the mind.',
-    cost: l => 0, cd: l => 1, p: l => ({ radius: 3.5 }), mods: l => ({ lifeRegen: 1 + 0.7 * l, manaRegen: 5 + 2 * l, minionRegen: 1 + 0.7 * l }) },
-  { id: 'tara_mercy', cls: 'invoker', tree: 2, tier: 1, name: "Tara's Mercy", type: 'heal', elem: 'spirit', stat: 'spi', icon: ['drop', '#4fd38f'],
-    desc: 'Green Tara, swift saviour, answers. You and your guardians are healed and a wave of light strikes nearby foes.',
-    cost: l => 6, cd: l => 8, dmg: R(6, 10), p: l => ({ heal: 10 + 2 * l, radius: 3.2, speed: 10 }), syn: [['om_mani', 4]] },
-  { id: 'weight_karma', cls: 'invoker', tree: 2, tier: 2, name: 'Weight of Karma', type: 'curse', elem: 'void', stat: 'spi', icon: ['scale', '#b77dff'],
-    desc: 'The deeds of nearby foes weigh upon them. They move slowly and take more damage from every source.',
-    cost: l => 0, cd: l => 0.5, p: l => ({ radius: 4.2 + 0.05 * l, curse: Math.min(60, 15 + 2 * l), slow: 20 }) },
-  { id: 'bodhicitta', cls: 'invoker', tree: 2, tier: 3, name: 'Bodhicitta', type: 'passive', icon: ['heart', '#ffb0c0'],
-    desc: 'The awakened heart that vows to free all beings. It shields you and all who stand with you.',
-    mods: l => ({ resAll: 5 + 1.5 * l, minionLife: 10 + 4 * l, life: 3 * l }) },
-  { id: 'medicine_buddha', cls: 'invoker', tree: 2, tier: 4, name: "Medicine Buddha's Light", type: 'nova', elem: 'spirit', stat: 'spi', icon: ['lotus', '#3a6ae8'],
-    desc: 'The lapis radiance of Bhaisajyaguru heals you and sears everything impure.',
-    cost: l => 18, cd: l => 12, dmg: R(35, 60), p: l => ({ radius: 6, speed: 8, heal: 20, color: '#4a7aff' }), syn: [['tara_mercy', 5], ['om_mani', 4]] },
 
   /* ---------------- KYUDO ARCHER ---------------- */
   { id: 'true_arrow', cls: 'archer', tree: 0, tier: 0, name: 'True Arrow', type: 'bolt', elem: 'phys', stat: 'dex', attack: 1, icon: ['arrow', '#e8e0d0'],

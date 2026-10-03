@@ -106,8 +106,8 @@ const AFFIX = [
   { k: 'costRed', pre: 0, s: ['neck', 'head'], t: [[16, 5, 10, 'of Frugality']] },
   { k: 'projCount', pre: 0, s: ['neck', 'weapon', 'offhand'], t: [[32, 1, 1, 'of Multitudes']], rare: 1 }
 ];
-const TREE_ADJ = { vajra: ['Thunderous', 'Ironclad', 'Wrathful'], sage: ['Insightful', 'Empty', 'Mandalic'], invoker: ['Protective', 'Many-Armed', 'Merciful'], archer: ['Archer\'s', 'Elemental', 'Windborne'], chod: ['Charnel', 'Severing', 'Dancing'] };
-const CLS_ADJ = { vajra: ["Vajra-Adept's", "Vajra-Master's"], sage: ["Scholar's", "Sage's"], invoker: ["Summoner's", "Invoker's"], archer: ["Fletcher's", "Kyudo Master's"], chod: ["Yogini's", "Machig's"] };
+const TREE_ADJ = { vajra: ['Thunderous', 'Ironclad', 'Wrathful'], sage: ['Insightful', 'Empty', 'Mandalic'], archer: ['Archer\'s', 'Elemental', 'Windborne'], chod: ['Charnel', 'Severing', 'Dancing'] };
+const CLS_ADJ = { vajra: ["Vajra-Adept's", "Vajra-Master's"], sage: ["Scholar's", "Sage's"], archer: ["Fletcher's", "Kyudo Master's"], chod: ["Yogini's", "Machig's"] };
 const RARE_A = ['Dharma', 'Lotus', 'Karma', 'Sutra', 'Bodhi', 'Stupa', 'Mandala', 'Dragon', 'Tiger', 'Crane', 'Garuda', 'Naga', 'Vajra', 'Moon', 'Sun', 'Ember', 'Frost', 'Storm', 'Jade', 'Iron', 'Cinder', 'Ghost', 'Bone', 'Ash', 'Cloud', 'Pearl', 'Shadow', 'Thunder'];
 const RARE_B = { weapon: ['Bite', 'Song', 'Fang', 'Spire', 'Word', 'Edge', 'Call', 'Wrath', 'Needle', 'Thorn'], offhand: ['Ward', 'Chime', 'Turn', 'Guard', 'Aegis', 'Echo'], head: ['Crown', 'Brow', 'Visage', 'Veil', 'Hood', 'Halo'], body: ['Mantle', 'Shroud', 'Vestment', 'Skin', 'Hide', 'Cloak'], hands: ['Grip', 'Grasp', 'Palm', 'Mudra', 'Touch'], waist: ['Knot', 'Cord', 'Coil', 'Sash', 'Girdle'], feet: ['Stride', 'Path', 'Step', 'Road', 'Trail'], neck: ['Heart', 'Eye', 'Seal', 'Talisman', 'Amulet', 'Charm'], ring: ['Circle', 'Band', 'Loop', 'Coil', 'Spiral', 'Knot'] };
 
@@ -121,8 +121,6 @@ const UNIQUES = [
   { id: 'u_discern', base: 'w_sword2', q: 10, name: 'Blade of Discernment', mods: { ed: 90, crit: 8, dex: 8, el_spirit: 20 }, lore: 'It knows what is real and what is merely vivid.' },
   { id: 'u_mist_yumi', base: 'w_bow2', q: 10, name: 'Yumi of the Morning Mist', mods: { ed: 100, dex: 10, castSpeed: 10, pierce: 15 }, lore: 'The archer does not aim. The arrow does not miss.' },
   { id: 'u_deer_bow', base: 'w_bow4', q: 32, name: 'Bow of the Deer Park', mods: { ed: 160, 'sk_cls:archer': 2, projCount: 1, crit: 8, critDmg: 40 }, lore: 'Strung where the first sermon was spoken.' },
-  { id: 'u_108', base: 'w_mala2', q: 12, name: 'Mala of One Hundred and Eight', mods: { 'sk_cls:invoker': 1, minionDmg: 40, minionLife: 40, mana: 20, manaRegen: 25 }, lore: 'One bead for each affliction of the mind.' },
-  { id: 'u_charnel_rosary', base: 'w_mala4', q: 32, name: 'Rosary of the Charnel Ground', mods: { 'sk_tree:invoker:0': 3, minionDmg: 80, lifeOnKill: 6, el_void: 30 }, lore: 'Carved from the bones of those who meditated on death until they no longer feared it.' },
   { id: 'u_kangling', base: 'w_khatvanga2', q: 12, name: 'Khatvanga of the Cemetery', mods: { ed: 90, 'sk_cls:chod': 1, el_void: 30, lifeLeech: 4, spi: 8 }, lore: 'Three heads upon it: one fresh, one withered, one bare bone.' },
   { id: 'u_machig', base: 'w_khatvanga5', q: 44, name: "Machig Labdrön's Staff", mods: { ed: 170, 'sk_cls:chod': 2, el_void: 60, 'sk_tree:chod:0': 2, lifeOnKill: 10, castSpeed: 15 }, lore: 'She taught that the demon is the thing you cling to.' },
   { id: 'u_damaru', base: 'o_bell2', q: 22, name: 'Damaru of Two Skulls', mods: { 'sk_tree:chod:1': 2, mana: 30, minionDmg: 40, castSpeed: 10, resAll: 10 }, lore: 'Its two faces are made from two skulls, and its rhythm is a heartbeat.' },

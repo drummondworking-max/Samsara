@@ -279,7 +279,6 @@ function buildCreature(key, L, nFrames = 5, scale) {
 const HERO_LOOK = {
   vajra: { body: 'human', h: 46, skin: '#c68a5a', cloth: '#d9822b', cloth2: '#a8481a', head: 'bald', weapon: 'vajra', bareArm: 1, beads: '#6a3a1a', bulky: 1, feet: '#6a4424' },
   sage: { body: 'human', h: 46, skin: '#d8a27a', cloth: '#7a1f2b', cloth2: '#d8a53a', head: 'bun', weapon: 'flamesword', feet: '#3a1a12' },
-  invoker: { body: 'human', h: 46, skin: '#b87a50', cloth: '#8e2418', cloth2: '#e0b23a', head: 'pandita', weapon: 'mala', beads: '#e8d8b0', feet: '#2a1a12' },
   archer: { body: 'human', h: 46, skin: '#d6a07a', cloth: '#23262c', cloth2: '#e8e2d2', head: 'kasa', weapon: 'yumi', noSash: 0, feet: '#e8e0d0' },
   chod: { body: 'human', h: 46, skin: '#c8906a', cloth: '#e8e2d2', cloth2: '#8a1a1a', head: 'yogini', weapon: 'khatvanga', beads: '#f0e6d0', feet: '#3a2a1a', bareArm: 1 }
 };

@@ -4,7 +4,7 @@ function makePlayer(x, y) {
   const S = charStats(G.C);
   G.P = { x, y, r: 0.35, hp: S.lifeMax, mp: S.manaMax, S, face: 1, anim: 0, moving: 0, cd: {}, cdMax: {}, noMana: {}, auraT: {}, invT: 1.5, hurtT: 0, castT: 0, vx: 0, vy: 0, potCd: 0, exitArmed: 0, chillT: 0 };
 }
-function refreshStats() { const C = G.C; if (!C) return; C._dirty = 1; const S = charStats(C); if (G.P) { G.P.S = S; G.P.hp = Math.min(G.P.hp, S.lifeMax); G.P.mp = Math.min(G.P.mp, S.manaMax); } }
+function refreshStats() { const C = G.C; if (!C) return; C._dirty = 1; const S = charStats(C); if (G.P) { G.P.S = S; G.P.hp = Math.min(G.P.hp, S.lifeMax); G.P.mp = Math.min(G.P.mp, S.manaMax); announceSynergies(S); } }
 function gainXP(amt) {
   const C = G.C; if (C.level >= 70) return; C.xp += amt;
   while (C.level < 70 && C.xp >= xpNext(C.level)) { C.xp -= xpNext(C.level); C.level++; C.statPts += 5; C.skillPts++; onLevelUp(); }
@@ -220,7 +220,7 @@ function startGame(C) {
   UI.buildHUD();
   const r = C.realm || 0; const idx = C.wps[areaKey(r, C.area)] ? C.area : 0;
   loadArea(r, idx, idx === 0 ? 'wp' : 'wp');
-  if (!C.realmSeen[r]) { C.realmSeen[r] = 1; G.state = 'panel'; showRealmIntro(r, () => { G.state = 'play'; setTimeout(() => guideHint(), 600); }); }
+  if (!C.realmSeen[r]) { C.realmSeen[r] = 1; G.state = 'panel'; showRealmIntro(r, () => { G.state = 'play'; if (!C.seenTut) showTutorial(C, () => setTimeout(() => guideHint(), 400)); else setTimeout(() => guideHint(), 600); }); }
 }
 function guideHint() {
   const A = G.A; if (!(A.kind === 'town' && G.C.level <= 2 && G.realmIdx === 0)) return;

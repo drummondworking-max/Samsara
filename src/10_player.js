@@ -5,7 +5,7 @@ function newChar(cls, name) {
   const C = { v: 1, id: 'c' + Date.now().toString(36) + randi(100, 999), name, cls, level: 1, xp: 0, stats: Object.assign({}, K.base), statPts: 0, skillPts: 0, qSkill: 0, qStat: 0,
     skills: { [K.start]: 1 }, slots: [K.start], equip: {}, inv: new Array(40).fill(null), stash: new Array(48).fill(null), gold: 80,
     pots: { hp: 4, mp: 3, rej: 0 }, quests: {}, bonus: { life: 0, res: 0 }, maxRealm: 0, realm: 0, area: 0, wps: { r0a0: 1 },
-    mantra: 0, time: 0, kills: 0, deaths: 0, created: Date.now(), imbue: 0, done: 0, seenIntro: 0, realmSeen: {} };
+    mantra: 0, time: 0, kills: 0, deaths: 0, created: Date.now(), imbue: 0, done: 0, seenIntro: 0, seenTut: 0, synSeen: {}, realmSeen: {} };
   for (const s of SLOTS) C.equip[s] = null;
   const w = newItem(K.weapon, 1); C.equip.weapon = w;
   C.equip.body = newItem('b_robe', 1); C.equip.feet = newItem('f_sandals', 1);
@@ -52,6 +52,17 @@ function charStats(C) {
     if (s.type === 'passive') addMods(S, s.mods(L));
     else if ((s.type === 'aura') && s.mods && C.slots.includes(id)) addMods(S, s.mods(L));
   }
+  // synergies: evolutions (active + passive), unions (two equipped actives), harmonies (two passives)
+  S.evo = {}; S.riders = {}; S.unions = []; S.harm = [];
+  for (const id in C.skills) {
+    const e = EVOS[id]; if (!e || SKILLS[id].type === 'passive') continue;
+    if ((S.lv[id] || 0) >= e.lv && (S.lv[e.passive] || 0) >= e.pLv) { S.evo[id] = e; (S.riders[id] = S.riders[id] || []).push(...e.riders); }
+  }
+  for (const u of UNIONS) {
+    if (u.cls !== C.cls || !C.slots.includes(u.a) || !C.slots.includes(u.b) || (S.lv[u.a] || 0) < UNION_LV || (S.lv[u.b] || 0) < UNION_LV) continue;
+    S.unions.push(u); for (const id in u.riders) (S.riders[id] = S.riders[id] || []).push(...u.riders[id]);
+  }
+  for (const h of HARMONIES) { if (h.cls === C.cls && (S.lv[h.a] || 0) >= HARM_LV && (S.lv[h.b] || 0) >= HARM_LV) { addMods(S, h.mods); S.harm.push(h); } }
   S.str += C.stats.str; S.dex += C.stats.dex; S.vit += C.stats.vit; S.spi += C.stats.spi;
   const lvl = C.level;
   S.lifeMax = Math.round((K.life[0] + S.vit * K.life[1] + (lvl - 1) * K.life[2] + S.life + C.bonus.life) * (1 + S.lifePct / 100));
@@ -82,14 +93,14 @@ function skillDamage(C, S, s, L, buffPct = 0) {
   const stat = s.stat ? S[s.stat] : 0;
   let pct = synBonus(C, s) + stat * 1.0 + (S['el_' + s.elem] || 0) + S.dmgPct + buffPct + (s.attack ? 0 : S.spellPct);
   if (s.type === 'summon') pct += S.minionDmg + C.level * 2;
-  const m = 1 + pct / 100; return [mn * m, mx * m];
+  const m = (1 + pct / 100) * (S.evo && S.evo[s.id] ? S.evo[s.id].dmg || 1 : 1) * (typeof G !== 'undefined' && G.castMul ? G.castMul : 1); return [mn * m, mx * m];
 }
 function xpNext(n) { return Math.round(62 * Math.pow(n, 1.85) + 50 * n); }
 function monScale(L) { const eh = Math.min(1, 0.7 + L * 0.05), ed = Math.min(1, 0.62 + L * 0.063); return { hp: 0.8 * eh * (1 + (L - 1) * 0.2) * Math.pow(1.03, L - 1), dmg: 0.8 * ed * (1 + (L - 1) * 0.075) * Math.pow(1.006, L - 1), xp: (1 + (L - 1) * 0.3) * Math.pow(1.034, L - 1) }; }
 function learnSkill(C, id) {
   const s = SKILLS[id]; if (!s || s.cls !== C.cls) return 'Not your skill';
   if (C.skillPts <= 0) return 'No skill points';
-  if (C.level < TIER_REQ[s.tier]) return `Requires level ${TIER_REQ[s.tier]}`;
+  if (C.level < tierReq(s)) return `Requires level ${tierReq(s)}`;
   const pre = prereqOf(s); if (pre && !(C.skills[pre.id] > 0)) return `Requires ${pre.name}`;
   if ((C.skills[id] || 0) >= 20) return 'Mastered';
   const first = !C.skills[id]; C.skills[id] = (C.skills[id] || 0) + 1; C.skillPts--; C._dirty = 1;
@@ -114,5 +125,5 @@ function saveChar(C) {
   const idx = saveIndex().filter(x => x.id !== C.id); idx.unshift({ id: C.id, name: C.name, cls: C.cls, level: C.level, realm: C.maxRealm, done: C.done, t: Date.now() });
   Store.set('wos_index', idx);
 }
-function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C || C.cls === 'invoker') return null; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
+function loadChar(id) { const C = Store.get('wos_' + id, null); if (!C || C.cls === 'invoker') return null; C.slots = (C.slots || []).filter(id => SKILLS[id] && SKILLS[id].type !== 'passive'); if (!C.synSeen) C.synSeen = {}; if (C.seenTut == null) C.seenTut = (C.level > 2 || C.realmSeen && Object.keys(C.realmSeen).length > 1) ? 1 : 0; for (const s of SLOTS) if (!(s in C.equip)) C.equip[s] = null; C._dirty = 1; return C; }
 function deleteChar(id) { Store.del('wos_' + id); Store.set('wos_index', saveIndex().filter(x => x.id !== id)); }

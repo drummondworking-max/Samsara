@@ -11,10 +11,10 @@ UI.buildHUD = function () {
   document.querySelectorAll('#hud [aria-label]').forEach(b => { if (!b.title) b.title = b.getAttribute('aria-label'); });
 };
 UI.refreshSkillbar = function () {
-  const C = G.C, S = G.P ? G.P.S : charStats(C); const key = C.slots.join(',') + '|' + C.slots.map(id => S.lv[id]).join(',');
+  const C = G.C, S = G.P ? G.P.S : charStats(C); const key = C.slots.join(',') + '|' + C.slots.map(id => S.lv[id] + (S.evo && S.evo[id] ? 'e' : '')).join(',');
   if (key === UI.skillbarKey) return; UI.skillbarKey = key;
   const els = $('skillbar').children;
-  for (let i = 0; i < 6; i++) { const el = els[i]; const id = C.slots[i]; const cv = el.querySelector('canvas'); const g = cv.getContext('2d'); g.clearRect(0, 0, 64, 64); el.querySelector('.lv').textContent = ''; if (id) { g.drawImage(skillIconCanvas(SKILLS[id], 64), 0, 0); el.querySelector('.lv').textContent = S.lv[id] || ''; el.title = SKILLS[id].name; } else el.title = 'Empty skill slot'; }
+  for (let i = 0; i < 6; i++) { const el = els[i]; const id = C.slots[i]; const cv = el.querySelector('canvas'); const g = cv.getContext('2d'); g.clearRect(0, 0, 64, 64); el.querySelector('.lv').textContent = ''; el.classList.toggle('evo', !!(id && S.evo && S.evo[id])); if (id) { const d = skDisp(SKILLS[id]); g.drawImage(skillIconCanvas(d, 64), 0, 0); el.querySelector('.lv').textContent = S.lv[id] || ''; el.title = d.name; } else el.title = 'Empty skill slot'; }
 };
 UI.hud = function () {
   const C = G.C, P = G.P; if (!P) return; const S = P.S;
@@ -69,12 +69,12 @@ UI.death = function (lose) {
 
 /* ---------- panels ---------- */
 UI.open = function (name, arg) {
-  if (G.state === 'dead') return; if (UI.panel === name && name !== 'npc') { UI.close(); return; }
+  if (G.state === 'dead' || UI.panel === 'tutorial') return; if (UI.panel === name && name !== 'npc') { UI.close(); return; }
   UI.panel = name; UI.arg = arg; UI.sel = null; UI.msg = ''; UI.askQ = null; UI.gemCombine = 0; if (name === 'skills') UI.skSel = UI.skSel || null;
   if (G.state === 'play' || G.state === 'panel') G.state = 'panel';
   $('layer').hidden = false; AU.play('open', 0.6); UI.render();
 };
-UI.close = function () { if (UI.panel === 'death') return; UI.panel = null; $('layer').hidden = true; $('layer').innerHTML = ''; if (G.state === 'panel') G.state = 'play'; AU.play('close', 0.5); if (G.C) { refreshStats(); UI.points(); } G.keys = {}; };
+UI.close = function () { if (UI.panel === 'death') return; if (UI.panel === 'tutorial') { UI.tutDone && UI.tutDone(); return; } UI.panel = null; $('layer').hidden = true; $('layer').innerHTML = ''; if (G.state === 'panel') G.state = 'play'; AU.play('close', 0.5); if (G.C) { refreshStats(); UI.points(); } G.keys = {}; };
 function ph(title) { return `<div class="ph"><h2>${title}</h2><button class="x" data-a="close" aria-label="Close">&times;</button></div>`; }
 function slotHTML(it, attrs, extra = '') { if (!it) return `<button class="slot" ${attrs}>${extra}</button>`; const cls = it.rar === 5 ? 'r5' : it.rar === 6 ? 'r6' : it.rar ? 'r' + Math.min(3, it.rar) : ''; const bad = G.C && !it.gem && !it.qitem && !canEquip(G.C, it) ? ' bad' : ''; const sel = UI.sel && UI.sel.it === it ? ' sel' : ''; return `<button class="slot ${cls}${bad}${sel}" ${attrs}><img alt="" src="${iconURL(itemIconCanvas(it, 64))}"></button>`; }
 UI.render = function () {
@@ -98,7 +98,7 @@ UI.render = function () {
   const sc = L.querySelector('.pb') ? L.querySelector('.pb').scrollTop : 0;
   L.innerHTML = html; const pb = L.querySelector('.pb'); if (pb && UI._keepScroll) pb.scrollTop = sc; UI._keepScroll = 0;
   if (p === 'map') { const cv = $('fullmap'); const r = cv.getBoundingClientRect(); cv.width = r.width * (devicePixelRatio || 1); cv.height = r.height * (devicePixelRatio || 1); drawFullMap(cv); }
-  if (p === 'skills') L.querySelectorAll('canvas[data-sk]').forEach(cv => { const s = SKILLS[cv.dataset.sk]; const g = cv.getContext('2d'); g.drawImage(skillIconCanvas(s, 64), 0, 0); });
+  if (p === 'skills') L.querySelectorAll('canvas[data-sk]').forEach(cv => { const s = SKILLS[cv.dataset.sk]; const g = cv.getContext('2d'); g.drawImage(skillIconCanvas(skDisp(s), 64), 0, 0); });
   if (p === 'npc') { const cv = L.querySelector('canvas.port'); if (cv) { const n = UI.arg; const look = n.role === 'stash' ? null : NPC_LOOK[n.role](G.realmIdx); const pc = portraitCanvas(look); cv.width = pc.width; cv.height = pc.height; cv.getContext('2d').drawImage(pc, 0, 0); } }
   if (p === 'options') bindOptions(L);
 };
@@ -120,7 +120,9 @@ document.addEventListener('click', e => {
     case 'tostash': doStashMove(); break;
     case 'socketin': doSocket(v); break;
     case 'stat': if (C.statPts > 0) { const n = e.shiftKey ? Math.min(5, C.statPts) : 1; C.stats[v] += n; C.statPts -= n; C._dirty = 1; refreshStats(); AU.play('click'); UI._keepScroll = 1; UI.render(); UI.points(); saveChar(C); } break;
-    case 'sknode': UI.skSel = v; AU.play('click'); UI._keepScroll = 1; UI.render(); break;
+    case 'sknode': UI.skSel = v; if (UI.skTab) UI.skTab = 0; AU.play('click'); UI._keepScroll = 1; UI.render(); break;
+    case 'replaytut': UI.panel = null; $('layer').hidden = true; showTutorial(G.C, () => { G.state = 'play'; }); break;
+    case 'sktab': UI.skTab = +v; AU.play('click'); UI.render(); break;
     case 'learn': { const err = learnSkill(C, v); if (err) { UI.msg = err; AU.play('error'); } else { AU.play('bell', 0.6); refreshStats(); UI.msg = ''; saveChar(C); } UI._keepScroll = 1; UI.render(); UI.points(); break; }
     case 'skeq': { const i = C.slots.indexOf(v); if (i >= 0) C.slots.splice(i, 1); else if (C.slots.length < 6) C.slots.push(v); else { UI.msg = 'All six skill slots are in use. Unequip one first.'; AU.play('error'); } C._dirty = 1; refreshStats(); UI._keepScroll = 1; UI.render(); saveChar(C); break; }
     case 'tab': UI.tab = +v; UI.render(); break;
@@ -214,7 +216,7 @@ function charPanelHTML() {
 function skillLines(s, L, C, S) {
   const out = []; if (!L) return out;
   if (s.type === 'passive') { const m = s.mods(L); for (const k in m) out.push(modText(k, Math.round(m[k] * 10) / 10)); return out; }
-  const p = s.p ? s.p(L) : {};
+  const p = skP(s, L);
   if (s.dmg || s.pct) { const d = skillDamage(C, S, s, L); if (s.attack) out.push(`Damage: ${fmt(d[0])}–${fmt(d[1])} ${ELEM_NAME[s.elem]} <span style="color:var(--dim)">(${Math.round(s.pct(L))}% weapon damage)</span>`); else out.push(`${s.type === 'aura' || s.type === 'zone' || s.type === 'beam' ? 'Damage per tick' : 'Damage'}: ${fmt(d[0])}–${fmt(d[1])} ${ELEM_NAME[s.elem]}`); }
   if (s.mods && s.type !== 'passive') { const m = s.mods(L); for (const k in m) out.push(modText(k, Math.round(m[k] * 10) / 10)); }
   const lab = { n: 'Projectiles', pierce: 'Pierces', radius: 'Radius', jumps: 'Chain jumps', max: 'Maximum summoned', dur: 'Duration', heal: 'Heals %', curse: 'Damage taken +%', slow: 'Slow %', explode: 'Burst radius', chain: 'Lightning jumps', fear: 'Fear (s)', orbitR: 'Orbit radius', stun: 'Stun (s)', execute: 'Erases foes below % life', area: 'Area', impact: 'Impact radius' };
@@ -226,25 +228,68 @@ function skillLines(s, L, C, S) {
   if (s.cd && s.type !== 'aura' && s.type !== 'curse') out.push(`Cooldown: ${(s.cd(L) / S.speedMul).toFixed(2)}s`);
   return out;
 }
+function riderText(r, s) {
+  const E = ELEM_NAME[r.e || (s && s.elem) || 'phys'].toLowerCase();
+  switch (r.k) {
+    case 'nova': return `Releases a ring of ${E} energy` + (r.stun ? ' that stuns' : '') + (r.curse ? ' and curses' : '');
+    case 'bolts': return `Calls ${r.n} bolts of ${E} on nearby foes`;
+    case 'echo': return `Repeats itself ${r.d}s later at ${Math.round(r.m * 100)}% strength`;
+    case 'chain': return `Leaps between up to ${r.j} foes as ${E}`;
+    case 'zone': return `Leaves a lingering field of ${E}`;
+    case 'heal': return `Restores ${r.pct}% of your life`;
+    case 'mana': return `Restores ${r.v} mana`;
+    case 'arrows': return `Looses ${r.n} seeking ${E} missiles`;
+    case 'orbit': return `Sets ${r.n} ${E} blades circling you`;
+    case 'meteor': return `Calls ${r.n} meteors`;
+  }
+  return '';
+}
 function skillPanelHTML() {
   const C = G.C, S = charStats(C), K = CLASSES[C.cls];
-  const cols = [0, 1, 2].map(t => { const list = treeSkills(C.cls, t); return `<div class="tree"><h4>${K.trees[t]}</h4>${list.map(s => { const h = C.skills[s.id] || 0; const lv = S.lv[s.id] || 0; const pre = prereqOf(s); const avail = C.skillPts > 0 && C.level >= TIER_REQ[s.tier] && (!pre || C.skills[pre.id]) && h < 20; const locked = !h && !avail; const eq = C.slots.includes(s.id); return `<button class="snode ${locked ? 'locked' : ''} ${avail ? 'avail' : ''} ${UI.skSel === s.id ? 'sel' : ''}" data-a="sknode" data-v="${s.id}" aria-label="${esc(s.name)}"><canvas width="64" height="64" data-sk="${s.id}"></canvas>${h || lv ? `<span class="lv">${lv}${lv !== h ? '' : ''}</span>` : ''}${eq ? '<span class="eq" title="Equipped"></span>' : ''}</button>`; }).join('')}</div>`; }).join('');
+  const tab = UI.skTab || 0;
+  const tabs = `<div class="tabs" style="padding:0 0 8px;justify-content:center"><button class="tab ${tab === 0 ? 'on' : ''}" data-a="sktab" data-v="0">Skills</button><button class="tab ${tab === 1 ? 'on' : ''}" data-a="sktab" data-v="1">Synergies${S.unions.length + S.harm.length + Object.keys(S.evo).length ? ' · ' + (S.unions.length + S.harm.length + Object.keys(S.evo).length) : ''}</button></div>`;
+  const cols = [0, 1, 2].map(t => { const list = treeSkills(C.cls, t); const pas = t === PASSIVE_TREE; return `<div class="tree${pas ? ' pas' : ''}"><h4>${K.trees[t]}</h4><div class="ptag">${pas ? 'Passive · always active' : 'Arts · cast themselves'}</div>${list.map(s => { const h = C.skills[s.id] || 0; const lv = S.lv[s.id] || 0; const pre = prereqOf(s); const avail = C.skillPts > 0 && C.level >= tierReq(s) && (!pre || C.skills[pre.id]) && h < 20; const locked = !h && !avail; const eq = C.slots.includes(s.id); const ev = S.evo[s.id]; return `<button class="snode ${locked ? 'locked' : ''} ${avail ? 'avail' : ''} ${UI.skSel === s.id ? 'sel' : ''} ${ev ? 'evo' : ''}" data-a="sknode" data-v="${s.id}" aria-label="${esc(skDisp(s).name)}"><canvas width="64" height="64" data-sk="${s.id}"></canvas>${h || lv ? `<span class="lv">${lv}</span>` : ''}${eq ? '<span class="eq" title="Equipped"></span>' : ''}${ev ? '<span class="star" title="Evolved">★</span>' : ''}</button>`; }).join('')}</div>`; }).join('');
   const info = `<div id="skinfoBox">${skillInfoHTML(UI.skSel, false)}</div>`;
-  const slots = `<div class="slotsbar">${[0, 1, 2, 3, 4, 5].map(i => { const sid = C.slots[i]; return sid ? `<button class="sk" data-a="sknode" data-v="${sid}" title="${esc(SKILLS[sid].name)}" style="padding:0"><canvas width="64" height="64" data-sk="${sid}"></canvas></button>` : '<div class="sk"></div>'; }).join('')}</div>`;
-  return `<div class="panel wide stone">${ph('Skills')}<div class="pb"><div class="pts">${C.skillPts ? `${C.skillPts} skill point${C.skillPts > 1 ? 's' : ''} to spend` : 'No unspent skill points'}</div><div class="sec" style="text-align:center">Equipped · all six cast themselves</div>${slots}<div class="skl"><div class="trees">${cols}</div><div class="infocol">${info}</div></div></div></div>`;
+  const slots = `<div class="slotsbar">${[0, 1, 2, 3, 4, 5].map(i => { const sid = C.slots[i]; return sid ? `<button class="sk${S.evo[sid] ? ' evo' : ''}" data-a="sknode" data-v="${sid}" title="${esc(skDisp(SKILLS[sid]).name)}" style="padding:0"><canvas width="64" height="64" data-sk="${sid}"></canvas></button>` : '<div class="sk"></div>'; }).join('')}</div>`;
+  const body = tab === 0 ? `<div class="skl"><div class="trees">${cols}</div><div class="infocol">${info}</div></div>` : synergyBookHTML(C, S);
+  return `<div class="panel wide stone">${ph('Skills')}<div class="pb"><div class="pts">${C.skillPts ? `${C.skillPts} skill point${C.skillPts > 1 ? 's' : ''} to spend` : 'No unspent skill points'}</div><div class="sec" style="text-align:center">Equipped · all six cast themselves</div>${slots}${tabs}${body}</div></div>`;
+}
+function synIcon(id, extra = '') { const s = SKILLS[id]; return `<button class="synic ${extra}" data-a="sknode" data-v="${id}" title="${esc(s.name)}"><canvas width="64" height="64" data-sk="${id}"></canvas></button>`; }
+function synergyBookHTML(C, S) {
+  const evos = Object.values(EVOS).filter(e => SKILLS[e.id].cls === C.cls);
+  const lvl = id => S.lv[id] || 0;
+  const evoCards = evos.map(e => { const on = !!S.evo[e.id]; const sk = SKILLS[e.id], ps = SKILLS[e.passive]; const ok1 = lvl(e.id) >= e.lv, ok2 = lvl(e.passive) >= e.pLv;
+    return `<div class="syncard ${on ? 'on' : ''}"><div class="synrow">${synIcon(e.id)}<span class="synop">+</span>${synIcon(e.passive)}<span class="synop">→</span><div class="synres"><b>${esc(e.name)}</b><small>${on ? 'Awakened' : 'Evolution'}</small></div></div><p>${esc(e.desc)}</p><div class="synneed"><span class="${ok1 ? 'ok' : ''}">${esc(sk.name)} ${lvl(e.id)}/${e.lv}</span><span class="${ok2 ? 'ok' : ''}">${esc(ps.name)} ${lvl(e.passive)}/${e.pLv}</span></div></div>`; }).join('');
+  const unCards = unionsFor(C.cls).map(u => { const on = S.unions.includes(u); const eqA = C.slots.includes(u.a), eqB = C.slots.includes(u.b);
+    return `<div class="syncard ${on ? 'on' : ''}"><div class="synrow">${synIcon(u.a)}<span class="synop">+</span>${synIcon(u.b)}<div class="synres"><b>${esc(u.name)}</b><small>${on ? 'Active' : 'Union'}</small></div></div><p>${esc(u.desc)}</p><div class="synneed"><span class="${lvl(u.a) >= UNION_LV && eqA ? 'ok' : ''}">${esc(SKILLS[u.a].name)} ${lvl(u.a)}/${UNION_LV}${eqA ? '' : ' · not equipped'}</span><span class="${lvl(u.b) >= UNION_LV && eqB ? 'ok' : ''}">${esc(SKILLS[u.b].name)} ${lvl(u.b)}/${UNION_LV}${eqB ? '' : ' · not equipped'}</span></div></div>`; }).join('');
+  const hCards = harmoniesFor(C.cls).map(h => { const on = S.harm.includes(h);
+    return `<div class="syncard ${on ? 'on' : ''}"><div class="synrow">${synIcon(h.a)}<span class="synop">+</span>${synIcon(h.b)}<div class="synres"><b>${esc(h.name)}</b><small>${on ? 'Active' : 'Harmony'}</small></div></div><p>${esc(h.desc)}</p><div class="synneed"><span class="${lvl(h.a) >= HARM_LV ? 'ok' : ''}">${esc(SKILLS[h.a].name)} ${lvl(h.a)}/${HARM_LV}</span><span class="${lvl(h.b) >= HARM_LV ? 'ok' : ''}">${esc(SKILLS[h.b].name)} ${lvl(h.b)}/${HARM_LV}</span></div></div>`; }).join('');
+  return `<div class="synbook"><p class="synintro"><b>Evolution</b> · an art at level ${EVO_LV} with its passive at level ${EVO_PLV} becomes a new, stronger art. <b>Union</b> · two equipped arts, each at level ${UNION_LV}, give each other a new attack. <b>Harmony</b> · two passives at level ${HARM_LV} grant a bonus together. Levels include bonuses from your gear.</p>
+  <div class="syncols"><div><div class="sec">Evolutions</div>${evoCards}</div><div><div class="sec">Unions</div>${unCards}</div><div><div class="sec">Harmonies</div>${hCards}</div></div></div>`;
 }
 function skillInfoHTML(id, preview) {
   const C = G.C, S = charStats(C), K = CLASSES[C.cls];
-  let info = `<div class="skinfo" style="color:var(--dim);font-style:italic">Select a skill to read about it. Skills unlock at levels ${TIER_REQ.join(', ')}. Each needs a point in the skill above it.</div>`;
+  let info = `<div class="skinfo" style="color:var(--dim);font-style:italic">Select a skill to read about it. Arts cast themselves; passives always work. Skills unlock at levels ${TIER_REQ.join(', ')} (passives at ${PASS_REQ.join(', ')}); each art needs a point in the art above it. Open the Synergies tab to see how arts combine into new attacks.</div>`;
   if (id && SKILLS[id] && SKILLS[id].cls === C.cls) {
-    const s = SKILLS[id]; const h = C.skills[id] || 0; const L = S.lv[id] || 0; const next = (L || 0) + 1; const pre = prereqOf(s);
-    const cur = skillLines(s, L, C, S), nx = skillLines(s, next, C, S);
-    const syn = (s.syn || []).map(([o, pct]) => `${SKILLS[o].name}: +${pct}% per point <span style="color:var(--dim)">(now +${(C.skills[o] || 0) * pct}%)</span>`);
-    const reqs = []; if (C.level < TIER_REQ[s.tier]) reqs.push(`Requires level ${TIER_REQ[s.tier]}`); if (pre && !C.skills[pre.id]) reqs.push(`Requires ${pre.name}`);
-    const active = s.type !== 'passive';
-    info = `<div class="skinfo"><h3>${esc(s.name)}</h3><div class="tp">${K.trees[s.tree]} · ${s.type === 'passive' ? 'Passive' : s.type === 'aura' || s.type === 'curse' ? 'Aura' : 'Auto-cast'}${s.elem ? ' · ' + ELEM_NAME[s.elem] : ''} · Level ${L}${L !== h ? ` (${h} + ${L - h} from items)` : ''}</div><p style="margin:.4em 0">${esc(s.desc)}</p>
+    const base = SKILLS[id]; const s = skDisp(base); const h = C.skills[id] || 0; const L = S.lv[id] || 0; const next = (L || 0) + 1; const pre = prereqOf(base);
+    const cur = skillLines(base, L, C, S), nx = skillLines(base, next, C, S);
+    const syn = (base.syn || []).map(([o, pct]) => `${SKILLS[o].name}: +${pct}% per point <span style="color:var(--dim)">(now +${(C.skills[o] || 0) * pct}%)</span>`);
+    const reqs = []; if (C.level < tierReq(base)) reqs.push(`Requires level ${tierReq(base)}`); if (pre && !C.skills[pre.id]) reqs.push(`Requires ${pre.name}`);
+    const active = base.type !== 'passive'; const pasTree = base.tree === PASSIVE_TREE;
+    const lvl = x => S.lv[x] || 0; let sy = '';
+    if (active) {
+      const e = EVOS[id];
+      if (e) { const on = !!S.evo[id]; sy += `<div class="sec">${on ? 'Evolved' : 'Evolution'}</div><div class="${on ? 'ev on' : 'ev'}"><b>${esc(e.name)}</b> <span style="color:var(--dim)">with ${esc(SKILLS[e.passive].name)}</span>${on ? `<div>${e.riders.map(r => esc(riderText(r, base))).filter(Boolean).join('. ')}.</div>` : `<div style="color:var(--dim)">${esc(base.name)} ${lvl(id)}/${e.lv} · ${esc(SKILLS[e.passive].name)} ${lvl(e.passive)}/${e.pLv}</div>`}</div>`; }
+      for (const u of unionsFor(C.cls)) if (u.a === id || u.b === id) { const o = u.a === id ? u.b : u.a; const on = S.unions.includes(u); sy += `<div class="${on ? 'ev on' : 'ev'}"><b>${esc(u.name)}</b> <span style="color:var(--dim)">with ${esc(SKILLS[o].name)}</span>${on ? `<div>${(u.riders[id] || []).map(r => esc(riderText(r, base))).filter(Boolean).join('. ') || esc(u.desc)}.</div>` : `<div style="color:var(--dim)">Equip both at level ${UNION_LV}+ (${lvl(id)}/${UNION_LV} · ${esc(SKILLS[o].name)} ${lvl(o)}/${UNION_LV}${C.slots.includes(o) ? '' : ', not equipped'})</div>`}</div>`; }
+    } else {
+      for (const e of Object.values(EVOS)) if (e.passive === id) { const on = !!S.evo[e.id]; sy += `<div class="${on ? 'ev on' : 'ev'}"><b>${esc(e.name)}</b> <span style="color:var(--dim)">${esc(SKILLS[e.id].name)} ${lvl(e.id)}/${e.lv} · this ${lvl(id)}/${e.pLv}</span></div>`; }
+      for (const hm of harmoniesFor(C.cls)) if (hm.a === id || hm.b === id) { const o = hm.a === id ? hm.b : hm.a; const on = S.harm.includes(hm); sy += `<div class="${on ? 'ev on' : 'ev'}"><b>${esc(hm.name)}</b> <span style="color:var(--dim)">with ${esc(SKILLS[o].name)} · ${lvl(id)}/${HARM_LV} and ${lvl(o)}/${HARM_LV}</span></div>`; }
+      if (sy) sy = `<div class="sec">Synergies</div>` + sy;
+    }
+    if (active && sy) sy = sy.replace(/^/, '');
+    info = `<div class="skinfo"><h3>${esc(s.name)}</h3><div class="tp">${K.trees[base.tree]} · ${base.type === 'passive' ? 'Passive' : base.type === 'aura' || base.type === 'curse' ? 'Aura' : 'Auto-cast'}${base.elem ? ' · ' + ELEM_NAME[base.elem] : ''} · Level ${L}${L !== h ? ` (${h} + ${L - h} from items)` : ''}</div><p style="margin:.4em 0">${esc(s.desc)}</p>
     ${cur.length ? `<div class="sec">Current level</div>${cur.map(l => `<div class="ln">${l}</div>`).join('')}` : ''}${h < 20 ? `<div class="sec">Next level</div>${nx.map(l => `<div class="nx">${l}</div>`).join('')}` : ''}
-    ${syn.length ? `<div class="sec">Synergies</div>${syn.map(l => `<div class="syn">${l}</div>`).join('')}` : ''}${reqs.length ? `<div style="color:var(--bad);margin-top:6px">${reqs.join(' · ')}</div>` : ''}
+    ${syn.length ? `<div class="sec">Resonance</div>${syn.map(l => `<div class="syn">${l}</div>`).join('')}` : ''}${sy}${reqs.length ? `<div style="color:var(--bad);margin-top:6px">${reqs.join(' · ')}</div>` : ''}
     ${UI.msg ? `<div style="color:var(--gold-hi);margin-top:6px">${esc(UI.msg)}</div>` : ''}
     ${preview ? '<div class="cmp">Click to select this skill</div>' : `<div class="actions" style="justify-content:flex-start"><button class="btn small" data-a="learn" data-v="${id}" ${C.skillPts > 0 && h < 20 ? '' : 'disabled'}>Learn (+1)</button>${active && h ? `<button class="btn small" data-a="skeq" data-v="${id}">${C.slots.includes(id) ? 'Unequip' : 'Equip'}</button>` : ''}</div>`}</div>`;
   }
@@ -319,10 +364,11 @@ function doService(v) {
 function menuPanelHTML() { return `<div class="panel narrow stone">${ph('Paused')}<div class="pb"><div class="menu" style="margin:0 auto;width:100%"><button class="btn" data-a="menu" data-v="resume">Resume</button><button class="btn" data-a="menu" data-v="options">Options</button><button class="btn" data-a="menu" data-v="help">How to Play</button><button class="btn" data-a="menu" data-v="exit">Save and Exit</button></div></div></div>`; }
 function helpHTML() {
   return `<div class="panel stone">${ph('How to Play')}<div class="pb" style="line-height:1.55;font-size:16px"><p style="margin-top:0">Walk. Your equipped skills cast themselves at nearby enemies, as long as you have the mana. Collect the glowing merit that fallen enemies leave behind to gain experience, and find better gear.</p>
+  <div style="text-align:center;margin:6px 0"><button class="btn small" data-a="replaytut">Replay the tutorial</button></div>
   <div class="sec">Moving</div><p>Phone and tablet: touch and drag anywhere on the world to move. Desktop: WASD or the arrow keys, or hold the left mouse button. Tap or click an item's name on the ground to walk over and pick it up.</p>
   <div class="sec">Keys</div><div class="kv"><div class="k">Inventory</div><div class="v">I</div><div class="k">Character</div><div class="v">C</div><div class="k">Skills</div><div class="v">T</div><div class="k">Quests</div><div class="v">Q</div><div class="k">Map</div><div class="v">M or Tab</div><div class="k">Healing / Mana / Rejuvenation</div><div class="v">1 / 2 / 3</div><div class="k">Mantra (ultimate)</div><div class="v">Space</div><div class="k">Portal to sanctuary</div><div class="v">R</div><div class="k">Talk / use</div><div class="v">E</div><div class="k">Fullscreen</div><div class="v">F</div><div class="k">Menu / close</div><div class="v">Esc</div></div>
-  <div class="sec">Building your monk</div><p>Each level gives 5 attribute points and 1 skill point. Skills in a tree unlock at levels 1, 6, 12, 18 and 26, and synergies let lower skills strengthen higher ones. Up to six active skills can be equipped at once; passives always work. The Mantra meter fills as you slay enemies; when it glows, release your ultimate.</p>
-  <div class="sec">Items</div><p>Blue items are magic, yellow are rare, gold are unique, and grey items have sockets for gems. Right-click (or double-click) to equip on desktop. In the sanctuary you can trade, gamble, add sockets, fuse gems, store items and reset your points.</p>
+  <div class="sec">Building your monk</div><p>Each level gives 5 attribute points and 1 skill point. Arts in the two active trees unlock at levels 1, 5, 10, 16, 22 and 28, and each needs a point in the one above it; the passive tree always works and unlocks by level alone. Up to six arts can be equipped at once. Raise arts and passives together: an art at level 8 with its passive at level 4 evolves, two equipped arts at level 5 form a union, and two passives at level 5 form a harmony. The Synergies tab lists every recipe. The Mantra meter fills as you slay enemies; when it glows, release your ultimate.</p>
+  <div class="sec">Items</div><p>Gear comes only from realm guardians and vendors. Blue items are magic, yellow are rare, gold are unique, and grey items have sockets for gems. Right-click (or double-click) to equip on desktop. In the sanctuary you can trade, gamble, add sockets, fuse gems, store items and reset your points.</p>
   <div class="sec">Dharanis</div><p>Set the right gems, in the right order, into a plain socketed item with exactly that many sockets, and it becomes a Dharani with powers of its own.</p>
   <div class="kv">${DHARANIS.map(d => `<div class="k" style="color:#f0a030">${esc(d.name)}</div><div class="v" style="font-size:14px">${d.gems.map(g => GEMS[g].name).join(' + ')} · ${d.slots.map(s => SLOT_NAME[s]).join(', ')}</div>`).join('')}</div></div></div>`;
 }
@@ -376,6 +422,7 @@ function setupInput() {
     const k = e.code; if (['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k) && G.state !== 'title') e.preventDefault();
     if (G.state === 'cine') { if (k === 'Escape' || k === 'Space' || k === 'Enter') CINE.skip(); return; }
     if (G.state === 'intro') { if (k === 'Escape' || k === 'Space' || k === 'Enter') UI.introDone && UI.introDone(); return; }
+    if (UI.panel === 'tutorial') { if (k === 'Enter' || k === 'Space' || k === 'ArrowRight') { const b = $('tutNext'); b && b.click(); } else if (k === 'ArrowLeft') { const b = $('tutBack'); b && b.click(); } else if (k === 'Escape') UI.tutDone && UI.tutDone(); return; }
     if (k === 'KeyF') { toggleFullscreen(); return; }
     if (G.state === 'title') return;
     G.keys[k] = 1;
@@ -393,7 +440,7 @@ function setupInput() {
   bind('bChar', () => UI.open('char')); bind('bInv', () => UI.open('inv')); bind('bSkill', () => UI.open('skills')); bind('bQuest', () => UI.open('quests')); bind('bMap', () => UI.open('map'));
   bind('bMenu', () => UI.open('menu')); bind('bFull', toggleFullscreen); bind('bPortal', usePortal); bind('potHP', () => quaff('hp')); bind('potMP', () => quaff('mp'));
   bind('mantra', mantraUlt); bind('bInteract', doInteract);
-  $('layer').addEventListener('pointerdown', e => { if (e.target === $('layer') && UI.panel && UI.panel !== 'death') UI.close(); });
+  $('layer').addEventListener('pointerdown', e => { if (e.target === $('layer') && UI.panel && UI.panel !== 'death' && UI.panel !== 'tutorial') UI.close(); });
 }
 function toggleFullscreen() {
   const d = document; try { if (!d.fullscreenElement && !d.webkitFullscreenElement) { const el = d.documentElement; const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (p && p.catch) p.catch(() => toast('Fullscreen is not available here', null, 2)); } else { (d.exitFullscreen || d.webkitExitFullscreen).call(d); } } catch (e) { toast('Fullscreen is not available here', null, 2); }

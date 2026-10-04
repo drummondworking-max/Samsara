@@ -1,7 +1,6 @@
 /* ================= classes & skills ================= */
 const sp = (b, l) => b * (1 + 0.3 * (l - 1) + 0.011 * (l - 1) * (l - 1));
 const R = (lo, hi) => l => [sp(lo, l), sp(hi, l)];
-const TIER_REQ = [1, 6, 12, 18, 26];
 const ELEM_NAME = { phys: 'Physical', fire: 'Fire', cold: 'Cold', light: 'Lightning', void: 'Void', spirit: 'Spirit' };
 const ELEM_COL = { phys: '#e8e0d0', fire: '#ff7a2e', cold: '#7fc8ff', light: '#ffe066', void: '#b77dff', spirit: '#fff2c8' };
 const STAT_NAME = { str: 'Strength', dex: 'Dexterity', vit: 'Vitality', spi: 'Spirit' };
@@ -243,8 +242,6 @@ const SKILL_LIST = [
 const SKILLS = {}; for (const s of SKILL_LIST) SKILLS[s.id] = s;
 const ACTIVE_TYPES = new Set(['bolt', 'strike', 'nova', 'orbit', 'aura', 'chain', 'zone', 'rain', 'summon', 'beam', 'boomerang', 'sentry', 'buff', 'heal', 'curse', 'sweep', 'five', 'mines']);
 function classSkills(cls) { return SKILL_LIST.filter(s => s.cls === cls); }
-function treeSkills(cls, t) { return SKILL_LIST.filter(s => s.cls === cls && s.tree === t).sort((a, b) => a.tier - b.tier); }
-function prereqOf(s) { if (s.tier === 0) return null; return SKILL_LIST.find(o => o.cls === s.cls && o.tree === s.tree && o.tier === s.tier - 1); }
 
 /* summoned guardians */
 const MINIONS = {

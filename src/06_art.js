@@ -289,7 +289,7 @@ function buildObjects() {
 
 /* ---------- icons: skills ---------- */
 function skillIconCanvas(s, size = 64) {
-  const key = s.id + size; if (ART.iconCv[key]) return ART.iconCv[key];
+  const key = s.id + size + s.icon[0] + s.icon[1]; if (ART.iconCv[key]) return ART.iconCv[key];
   const c = mkCanvas(size, size); const g = c.getContext('2d'); const k = size / 64; g.scale(k, k);
   const [shape, col] = s.icon;
   g.fillStyle = rgrad(g, 32, 30, 2, 44, [[0, shade(col, -0.35)], [0.6, shade(col, -0.72)], [1, '#070504']]); g.fillRect(0, 0, 64, 64);

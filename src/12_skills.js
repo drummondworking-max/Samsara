@@ -9,17 +9,18 @@ function angTo(x0, y0, x1, y1) { return Math.atan2(y1 - y0, x1 - x0); }
 function updatePlayerSkills(dt) {
   const P = G.P, C = G.C, S = P.S;
   const spd = S.speedMul * (G.buffs.wind ? 1.3 : 1) * (G.buffs.skydance ? 1 + G.buffs.skydance.cs / 100 : 1);
+  if (G.echoes && G.echoes.length) for (let i = G.echoes.length - 1; i >= 0; i--) { const e = G.echoes[i]; e.t -= dt; if (e.t <= 0) { G.echoes.splice(i, 1); G.castMul = e.m; G.inEcho = 1; try { castSkill(e.s, e.L); } finally { G.inEcho = 0; G.castMul = 1; } } }
   for (const id of C.slots) {
-    const s = SKILLS[id]; const L = S.lv[id]; if (!L) continue;
+    const s = SKILLS[id]; const L = S.lv[id]; if (!L || s.type === 'passive') continue;
     if (s.type === 'aura' || s.type === 'curse') { updateAura(s, L, dt); continue; }
     P.cd[id] = (P.cd[id] || 0) - dt * spd; if (P.cd[id] > 0) continue;
     const cost = s.cost(L) * (1 - S.costRed / 100);
     if (P.mp < cost) { P.noMana[id] = 1; P.cd[id] = 0.1; continue; } P.noMana[id] = 0;
-    if (castSkill(s, L)) { P.mp -= cost; P.cd[id] = s.cd(L); P.castT = 0.22; P.cdMax[id] = s.cd(L); } else P.cd[id] = 0.12;
+    if (castSkill(s, L)) { P.mp -= cost; P.cd[id] = s.cd(L); P.castT = 0.22; P.cdMax[id] = s.cd(L); runRiders(s, L); } else P.cd[id] = 0.12;
   }
 }
 function castSkill(s, L) {
-  const P = G.P, S = P.S; const p = s.p ? s.p(L) : {}; const am = areaMul();
+  const P = G.P, S = P.S; const p = skP(s, L); const am = areaMul();
   switch (s.type) {
     case 'bolt': case 'five': {
       const tgt = nearestEnemy(P.x, P.y, 10.5); if (!tgt) return false;
@@ -230,3 +231,36 @@ function updateMinions(dt) {
   }
 }
 function deathFxAt(x, y, col) { for (let i = 0; i < 10; i++) addPart(x, y, rand(10, 30), rand(-0.6, 0.6), rand(-0.6, 0.6), rand(20, 60), col, 0.8, 'mote'); }
+
+/* ---------- synergies: evolved parameters and rider attacks ---------- */
+G.echoes = []; G.castMul = 0;
+function skP(s, L) { let p = s.p ? s.p(L) : {}; const e = G.P && G.P.S.evo && G.P.S.evo[s.id]; if (e && e.p) p = Object.assign({}, p, e.p(p, L)); return p; }
+function runRiders(s, L) {
+  const P = G.P, S = P.S, list = S.riders && S.riders[s.id]; if (!list || !list.length) return;
+  const base = skDmg(s, L); const am = areaMul(); const dm = m => [base[0] * m, base[1] * m];
+  for (const r of list) {
+    const e = r.e || s.elem || 'phys';
+    switch (r.k) {
+      case 'nova': addNova(P.x, P.y, r.r * am, dm(r.m), e, { stun: r.stun, fear: r.fear, curse: r.curse, curseDur: r.curseDur, speed: 11, color: ELEM_COL[e] }); break;
+      case 'echo': if (!G.inEcho) G.echoes.push({ s, L, t: r.d, m: r.m }); break;
+      case 'bolts': { const l = enemiesNear(P.x, P.y, 9); if (!l.length) break; const R = { impacts: [], dmg: dm(r.m), elem: e, r: 1.1, stun: 0.2, fx: e === 'light' ? 'lightning' : undefined }; for (let i = 0; i < r.n; i++) { const t = pick(l); R.impacts.push({ x: t.x + rand(-0.4, 0.4), y: t.y + rand(-0.4, 0.4), t: -rand(0, 0.35) - 0.15, delay: 0.15 }); } G.rains.push(R); AU.play(e === 'light' ? 'lightning' : 'boom', 0.4); break; }
+      case 'chain': { const t = nearestEnemy(P.x, P.y, 9); if (t) castChainFrom(P.x, P.y, dm(r.m), e, r.j, 3.8, t); break; }
+      case 'zone': { if (G.zones.length > 60) break; const t = nearestEnemy(P.x, P.y, 9); const x = t ? t.x : P.x, y = t ? t.y : P.y; G.zones.push({ x, y, r: r.r * am, dur: r.dur * S.durMul, tick: 0.5, tt: 0.3, t: 0, dmg: dm(r.m), elem: e, slow: r.slow || 0, pull: r.pull || 0, root: 0, fx: r.fx, burst: 0 }); break; }
+      case 'heal': P.hp = Math.min(S.lifeMax, P.hp + S.lifeMax * r.pct / 100); break;
+      case 'mana': P.mp = Math.min(S.manaMax, P.mp + r.v); break;
+      case 'arrows': { const l = enemiesNear(P.x, P.y, 10); if (!l.length) break; for (let i = 0; i < r.n; i++) { const t = pick(l); const a = angTo(P.x, P.y, t.x, t.y) + rand(-0.6, 0.6); makeProj({ x: P.x, y: P.y, vx: Math.cos(a) * 11, vy: Math.sin(a) * 11, life: 1.8, dmg: dm(r.m), elem: e, pierce: 0, r: 0.35, sprite: ELEM_SPR[e] || 'arrow', homing: 6, target: t }); } break; }
+      case 'orbit': { if (G.orbits.length > 40) break; const dur = r.dur * S.durMul; for (let i = 0; i < r.n; i++) G.orbits.push({ sid: s.id, a: i / r.n * TAU + rand(0, 1), R: 1.7, size: 0.45, spin: 4, t: 0, life: dur, dmg: dm(r.m), elem: e, hitCd: 0.4, hits: new Map(), sprite: r.sprite, knock: 0, burn: 0 }); break; }
+      case 'meteor': { const c = clusterTarget(P.x, P.y, 9); if (!c) break; const R = { impacts: [], dmg: dm(r.m), elem: 'fire', r: 1.6, stun: 0, fx: 'meteor', burnGround: 2 }; for (let i = 0; i < r.n; i++) R.impacts.push({ x: c.x + rand(-2, 2), y: c.y + rand(-2, 2), t: -rand(0, 0.8) - 0.5, delay: 0.5 }); G.rains.push(R); break; }
+    }
+  }
+}
+function skDisp(s) { const e = G.P && G.P.S.evo && G.P.S.evo[s.id]; return e ? Object.assign({}, s, { name: e.name, icon: e.icon, desc: e.desc, evolved: 1 }) : s; }
+function announceSynergies(S) {
+  const C = G.C; if (!C || !G.P) return; const seen = C.synSeen || (C.synSeen = {});
+  const news = []; for (const id in S.evo) if (!seen['e:' + id]) news.push(['e:' + id, 'Evolution: ' + S.evo[id].name, SKILLS[id].name + ' has awakened into a new art']);
+  for (const u of S.unions) if (!seen['u:' + u.id]) news.push(['u:' + u.id, 'Union: ' + u.name, u.desc]);
+  for (const h of S.harm) if (!seen['h:' + h.id]) news.push(['h:' + h.id, 'Harmony: ' + h.name, h.desc]);
+  if (!news.length) return;
+  for (const n of news) seen[n[0]] = 1;
+  if (G.state === 'play' || G.state === 'panel') { const n = news[0]; toast(n[1], n[2], 5); AU.play('bell', 0.9); flash('#ffe08a', 0.3); }
+}
